@@ -1,6 +1,7 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 const session = require("express-session");
+const cors = require("cors");
 
 const swaggerUi = require("swagger-ui-express");
 const swaggerDocument = require("./swagger.json");
@@ -11,6 +12,7 @@ const app = express();
 const port = process.env.PORT || 8080;
 
 // Middleware
+app.use(cors());
 app.use(bodyParser.json());
 app.use(express.static("./public"));
 
