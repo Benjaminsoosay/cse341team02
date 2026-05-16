@@ -1,29 +1,33 @@
 const router = require("express").Router();
 const contactsController = require("../controllers/contacts");
-
 const validate = require("../middleware/validate");
 
-// GET all contacts
-router.get("/", contactsController.getAll);
+// Home test route
+router.get("/", (req, res) => {
+  res.send("Contacts route working");
+});
 
-// GET single contact (ID validation inside controller)
+// GET all contacts
+router.get("/all", contactsController.getAll);
+
+// GET single contact
 router.get("/:id", contactsController.getSingle);
 
-// CREATE contact (VALIDATION REQUIRED)
+// CREATE contact
 router.post(
   "/",
   validate.saveContact,
   contactsController.createContact
 );
 
-// UPDATE contact (VALIDATION REQUIRED)
+// UPDATE contact
 router.put(
   "/:id",
   validate.saveContact,
   contactsController.updateContact
 );
 
-// DELETE contact (ID validation inside controller)
+// DELETE contact
 router.delete("/:id", contactsController.deleteContact);
 
 module.exports = router;
