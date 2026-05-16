@@ -1,12 +1,14 @@
 const mongodb = require("../db/connect");
 const { ObjectId } = require("mongodb");
 
-// GET ALL CONTACTS (UPDATED WITH LIMIT)
+/* =========================
+   GET ALL CONTACTS
+========================= */
 const getAll = (req, res) => {
   let limit = parseInt(req.query.limit);
 
   if (isNaN(limit) || limit <= 0) {
-    limit = 0;
+    limit = 0; // no limit
   }
 
   mongodb
@@ -17,21 +19,26 @@ const getAll = (req, res) => {
     .limit(limit)
     .toArray()
     .then((lists) => {
-      res.setHeader("Content-Type", "application/json");
       res.status(200).json(lists);
     })
     .catch((err) => {
-      res.status(500).json({ error: err.message });
+      res.status(500).json({
+        error: "Failed to retrieve contacts",
+        message: err.message
+      });
     });
 };
 
-// GET SINGLE CONTACT
+/* =========================
+   GET SINGLE CONTACT
+========================= */
 const getSingle = (req, res) => {
   const contactId = req.params.id;
 
+  // VALIDATION (ID CHECK)
   if (!ObjectId.isValid(contactId)) {
     return res.status(400).json({
-      error: "Must use a valid contact id to find a contact"
+      error: "Invalid contact ID format"
     });
   }
 
@@ -39,17 +46,27 @@ const getSingle = (req, res) => {
     .getDb()
     .db()
     .collection("contacts")
-    .find({ _id: new ObjectId(contactId) })
-    .toArray()
+    .findOne({ _id: new ObjectId(contactId) })
     .then((result) => {
-      res.status(200).json(result[0]);
+      if (!result) {
+        return res.status(404).json({
+          error: "Contact not found"
+        });
+      }
+
+      res.status(200).json(result);
     })
     .catch((err) => {
-      res.status(500).json({ error: err.message });
+      res.status(500).json({
+        error: "Failed to retrieve contact",
+        message: err.message
+      });
     });
 };
 
-// CREATE CONTACT
+/* =========================
+   CREATE CONTACT
+========================= */
 const createContact = async (req, res) => {
   try {
     const contact = {
@@ -67,26 +84,33 @@ const createContact = async (req, res) => {
       .insertOne(contact);
 
     if (response.acknowledged) {
-      res.status(201).json(response);
+      res.status(201).json({
+        message: "Contact created successfully",
+        id: response.insertedId
+      });
     } else {
       res.status(500).json({
-        error: "Error creating contact"
+        error: "Failed to create contact"
       });
     }
   } catch (err) {
     res.status(500).json({
-      error: err.message || "Error creating contact"
+      error: "Server error",
+      message: err.message
     });
   }
 };
 
-// UPDATE CONTACT
+/* =========================
+   UPDATE CONTACT
+========================= */
 const updateContact = async (req, res) => {
   const contactId = req.params.id;
 
+  // VALIDATION
   if (!ObjectId.isValid(contactId)) {
     return res.status(400).json({
-      error: "Must use a valid contact id to update a contact"
+      error: "Invalid contact ID format"
     });
   }
 
@@ -120,23 +144,27 @@ const updateContact = async (req, res) => {
       });
     } else {
       res.status(200).json({
-        message: "No changes were made"
+        message: "No changes detected"
       });
     }
   } catch (err) {
     res.status(500).json({
-      error: err.message || "Update failed"
+      error: "Update failed",
+      message: err.message
     });
   }
 };
 
-// DELETE CONTACT
+/* =========================
+   DELETE CONTACT
+========================= */
 const deleteContact = (req, res) => {
   const contactId = req.params.id;
 
+  // VALIDATION
   if (!ObjectId.isValid(contactId)) {
     return res.status(400).json({
-      error: "Must use a valid contact id to delete a contact"
+      error: "Invalid contact ID format"
     });
   }
 
@@ -147,19 +175,26 @@ const deleteContact = (req, res) => {
     .deleteOne({ _id: new ObjectId(contactId) })
     .then((response) => {
       if (response.deletedCount > 0) {
-        res.status(200).json({ message: "Contact deleted" });
+        res.status(200).json({
+          message: "Contact deleted successfully"
+        });
       } else {
-        res.status(404).json({ message: "Contact not found" });
+        res.status(404).json({
+          error: "Contact not found"
+        });
       }
     })
     .catch((err) => {
       res.status(500).json({
-        error: err.message || "Delete failed"
+        error: "Delete failed",
+        message: err.message
       });
     });
 };
 
-// EXPORTS
+/* =========================
+   EXPORTS
+========================= */
 module.exports = {
   getAll,
   getSingle,

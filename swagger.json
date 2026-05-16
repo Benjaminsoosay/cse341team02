@@ -5,12 +5,20 @@
     "description": "Contacts REST API with validation and error handling",
     "version": "1.0.0"
   },
-  "host": "cse341team02-1.onrender.com",
+  "host": "localhost:8080",
   "basePath": "/",
-  "schemes": ["https"],
-
+  "schemes": ["http"],
   "paths": {
-
+    "/api-docs": {
+      "get": {
+        "description": "Swagger documentation UI",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/contacts": {
       "get": {
         "description": "Get all contacts",
@@ -25,11 +33,14 @@
           }
         ],
         "responses": {
-          "200": { "description": "OK" },
-          "500": { "description": "Server Error" }
+          "200": {
+            "description": "OK"
+          },
+          "500": {
+            "description": "Server Error"
+          }
         }
       },
-
       "post": {
         "description": "Create a new contact",
         "consumes": ["application/json"],
@@ -43,23 +54,43 @@
               "type": "object",
               "required": ["firstName", "lastName", "email", "favoriteColor"],
               "properties": {
-                "firstName": { "type": "string", "example": "John" },
-                "lastName": { "type": "string", "example": "Doe" },
-                "email": { "type": "string", "example": "john@example.com" },
-                "favoriteColor": { "type": "string", "example": "blue" },
-                "birthday": { "type": "string", "example": "1990-01-01" }
+                "firstName": {
+                  "type": "string",
+                  "example": "John"
+                },
+                "lastName": {
+                  "type": "string",
+                  "example": "Doe"
+                },
+                "email": {
+                  "type": "string",
+                  "example": "john@example.com"
+                },
+                "favoriteColor": {
+                  "type": "string",
+                  "example": "blue"
+                },
+                "birthday": {
+                  "type": "string",
+                  "example": "1990-01-01"
+                }
               }
             }
           }
         ],
         "responses": {
-          "201": { "description": "Created" },
-          "412": { "description": "Validation Failed" },
-          "500": { "description": "Internal Server Error" }
+          "201": {
+            "description": "Created"
+          },
+          "412": {
+            "description": "Validation Failed"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
         }
       }
     },
-
     "/contacts/{id}": {
       "get": {
         "description": "Get a single contact by ID",
@@ -74,12 +105,17 @@
           }
         ],
         "responses": {
-          "200": { "description": "OK" },
-          "400": { "description": "Invalid ID format" },
-          "404": { "description": "Not Found" }
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Invalid ID format"
+          },
+          "404": {
+            "description": "Not Found"
+          }
         }
       },
-
       "put": {
         "description": "Update a contact by ID",
         "consumes": ["application/json"],
@@ -98,24 +134,48 @@
             "schema": {
               "type": "object",
               "properties": {
-                "firstName": { "type": "string", "example": "Jane" },
-                "lastName": { "type": "string", "example": "Smith" },
-                "email": { "type": "string", "example": "jane@example.com" },
-                "favoriteColor": { "type": "string", "example": "green" },
-                "birthday": { "type": "string", "example": "1995-05-15" }
+                "firstName": {
+                  "type": "string",
+                  "example": "Jane"
+                },
+                "lastName": {
+                  "type": "string",
+                  "example": "Smith"
+                },
+                "email": {
+                  "type": "string",
+                  "example": "jane@example.com"
+                },
+                "favoriteColor": {
+                  "type": "string",
+                  "example": "green"
+                },
+                "birthday": {
+                  "type": "string",
+                  "example": "1995-05-15"
+                }
               }
             }
           }
         ],
         "responses": {
-          "200": { "description": "OK" },
-          "400": { "description": "Invalid ID format" },
-          "404": { "description": "Not Found" },
-          "412": { "description": "Validation Failed" },
-          "500": { "description": "Server Error" }
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Invalid ID format"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "412": {
+            "description": "Validation Failed"
+          },
+          "500": {
+            "description": "Server Error"
+          }
         }
       },
-
       "delete": {
         "description": "Delete a contact by ID",
         "produces": ["application/json"],
@@ -128,10 +188,18 @@
           }
         ],
         "responses": {
-          "200": { "description": "Deleted Successfully" },
-          "400": { "description": "Invalid ID format" },
-          "404": { "description": "Not Found" },
-          "500": { "description": "Server Error" }
+          "200": {
+            "description": "Deleted Successfully"
+          },
+          "400": {
+            "description": "Invalid ID format"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Server Error"
+          }
         }
       }
     }
