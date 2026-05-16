@@ -22,7 +22,12 @@ app.use(
   })
 );
 
-// Swagger (must be before routes)
+// ROOT ROUTE
+app.get("/", (req, res) => {
+  res.send("Welcome to the Contacts API");
+});
+
+// Swagger
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 // Routes
@@ -31,10 +36,10 @@ app.use("/contacts", contactsRoutes);
 
 // Optional login route
 app.get("/login", (req, res) => {
-  res.render("login", {});
+  res.send("Login page");
 });
 
-// GLOBAL ERROR HANDLER (required idea from lesson)
+// GLOBAL ERROR HANDLER
 process.on("uncaughtException", (err) => {
   console.error("UNCAUGHT EXCEPTION:", err);
 });
