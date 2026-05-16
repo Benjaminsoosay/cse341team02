@@ -2,36 +2,21 @@ const swaggerAutogen = require('swagger-autogen')();
 
 const doc = {
   info: {
-    title: 'Temple API',
-    description: 'API documentation for temple routes',
-    version: '1.0.0',
+    title: 'Contacts API',
+    description: 'Contacts REST API with validation and error handling',
+    version: '1.0.0'
   },
   host: 'localhost:8080',
-  basePath: '/temples',        // 👈 ADD THIS LINE
-  schemes: ['http'],
-  consumes: ['application/json'],
-  produces: ['application/json'],
-  definitions: {
-    Temple: {
-      temple_id: 'string',
-      name: 'string',
-      location: 'string',
-      description: 'string',
-      dedicated: 'string',
-      additionalInfo: 'object',
-    },
-  },
-  securityDefinitions: {
-    ApiKeyAuth: {
-      type: 'apiKey',
-      in: 'header',
-      name: 'apiKey',
-    },
-  },
-  security: [{ ApiKeyAuth: [] }],
+  schemes: ['http']
 };
 
 const outputFile = './swagger.json';
-const endpointsFiles = ['./routes/temple.js'];
+const endpointsFiles = ['./routes/contacts.js'];
 
+// generate swagger.json
 swaggerAutogen(outputFile, endpointsFiles, doc);
+
+// Run server after it gets generated
+// swaggerAutogen(outputFile, endpointsFiles, doc).then(async () => {
+//   await import('./index.js');
+// });

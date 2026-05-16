@@ -1,15 +1,29 @@
-const routes = require('express').Router();
-const temple = require('./temple');
+const router = require("express").Router();
+const contactsController = require("../controllers/contacts");
 
-routes.use('/temples', temple);
-routes.use(
-  '/',
-  (docData = (req, res) => {
-    let docData = {
-      documentationURL: 'https://nathanbirch.github.io/nathan-byui-api-docs',
-    };
-    res.send(docData);
-  })
+const validate = require("../middleware/validate");
+
+// GET all contacts
+router.get("/", contactsController.getAll);
+
+// GET single contact (ID validation inside controller)
+router.get("/:id", contactsController.getSingle);
+
+// CREATE contact (VALIDATION REQUIRED)
+router.post(
+  "/",
+  validate.saveContact,
+  contactsController.createContact
 );
 
-module.exports = routes;
+// UPDATE contact (VALIDATION REQUIRED)
+router.put(
+  "/:id",
+  validate.saveContact,
+  contactsController.updateContact
+);
+
+// DELETE contact (ID validation inside controller)
+router.delete("/:id", contactsController.deleteContact);
+
+module.exports = router;

@@ -1,32 +1,18 @@
 {
   "swagger": "2.0",
   "info": {
-    "title": "Temple API",
-    "description": "API documentation for temple routes",
+    "title": "Contacts API",
+    "description": "Contacts REST API with validation and error handling",
     "version": "1.0.0"
   },
-  "host": "localhost:8080",
-  "basePath": "/temples",
-  "schemes": [
-    "http"
-  ],
-  "securityDefinitions": {
-    "ApiKeyAuth": {
-      "type": "apiKey",
-      "in": "header",
-      "name": "apiKey"
-    }
-  },
-  "consumes": [
-    "application/json"
-  ],
-  "produces": [
-    "application/json"
-  ],
+  "host": "https://cse341team02-1.onrender.com",
+  "basePath": "/",
+  "schemes": ["http"],
+
   "paths": {
-    "/api-docs.json": {
+    "/api-docs": {
       "get": {
-        "description": "",
+        "description": "Swagger documentation UI",
         "responses": {
           "200": {
             "description": "OK"
@@ -34,127 +20,130 @@
         }
       }
     },
-    "/": {
+
+    "/contacts": {
       "get": {
-        "description": "",
+        "description": "Get all contacts",
+        "produces": ["application/json"],
         "parameters": [
           {
-            "name": "apiKey",
-            "in": "header",
-            "type": "string"
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "description": "Limit number of contacts returned"
           }
         ],
         "responses": {
-          "200": {
-            "description": "OK"
-          },
-          "500": {
-            "description": "Internal Server Error"
-          }
+          "200": { "description": "OK" },
+          "500": { "description": "Server Error" }
         }
       },
+
       "post": {
-        "description": "",
+        "description": "Create a new contact",
+        "consumes": ["application/json"],
+        "produces": ["application/json"],
         "parameters": [
           {
             "name": "body",
             "in": "body",
+            "required": true,
             "schema": {
               "type": "object",
+              "required": ["firstName", "lastName", "email", "favoriteColor"],
               "properties": {
-                "name": {
-                  "example": "any"
-                },
-                "temple_id": {
-                  "example": "any"
-                },
-                "description": {
-                  "example": "any"
-                },
-                "location": {
-                  "example": "any"
-                }
+                "firstName": { "type": "string", "example": "John" },
+                "lastName": { "type": "string", "example": "Doe" },
+                "email": { "type": "string", "example": "john@example.com" },
+                "favoriteColor": { "type": "string", "example": "blue" },
+                "birthday": { "type": "string", "example": "1990-01-01" }
               }
             }
           }
         ],
         "responses": {
-          "200": {
-            "description": "OK"
-          },
-          "400": {
-            "description": "Bad Request"
-          },
-          "500": {
-            "description": "Internal Server Error"
-          }
+          "201": { "description": "Created" },
+          "412": { "description": "Validation Failed" },
+          "500": { "description": "Internal Server Error" }
         }
       }
     },
-    "/{temple_id}": {
+
+    "/contacts/{id}": {
       "get": {
-        "description": "",
+        "description": "Get a single contact by ID",
+        "produces": ["application/json"],
         "parameters": [
           {
-            "name": "temple_id",
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "description": "Contact ID"
+          }
+        ],
+        "responses": {
+          "200": { "description": "OK" },
+          "400": { "description": "Invalid ID format" },
+          "404": { "description": "Not Found" }
+        }
+      },
+
+      "put": {
+        "description": "Update a contact by ID",
+        "consumes": ["application/json"],
+        "produces": ["application/json"],
+        "parameters": [
+          {
+            "name": "id",
             "in": "path",
             "required": true,
             "type": "string"
           },
           {
-            "name": "apiKey",
-            "in": "header",
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "firstName": { "type": "string", "example": "Jane" },
+                "lastName": { "type": "string", "example": "Smith" },
+                "email": { "type": "string", "example": "jane@example.com" },
+                "favoriteColor": { "type": "string", "example": "green" },
+                "birthday": { "type": "string", "example": "1995-05-15" }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": { "description": "OK" },
+          "400": { "description": "Invalid ID format" },
+          "404": { "description": "Not Found" },
+          "412": { "description": "Validation Failed" },
+          "500": { "description": "Server Error" }
+        }
+      },
+
+      "delete": {
+        "description": "Delete a contact by ID",
+        "produces": ["application/json"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
             "type": "string"
           }
         ],
         "responses": {
-          "200": {
-            "description": "OK"
-          },
-          "404": {
-            "description": "Not Found"
-          },
-          "500": {
-            "description": "Internal Server Error"
-          }
+          "200": { "description": "Deleted Successfully" },
+          "400": { "description": "Invalid ID format" },
+          "404": { "description": "Not Found" },
+          "500": { "description": "Server Error" }
         }
       }
     }
-  },
-  "definitions": {
-    "Temple": {
-      "type": "object",
-      "properties": {
-        "temple_id": {
-          "type": "string",
-          "example": "string"
-        },
-        "name": {
-          "type": "string",
-          "example": "string"
-        },
-        "location": {
-          "type": "string",
-          "example": "string"
-        },
-        "description": {
-          "type": "string",
-          "example": "string"
-        },
-        "dedicated": {
-          "type": "string",
-          "example": "string"
-        },
-        "additionalInfo": {
-          "type": "string",
-          "example": "object"
-        }
-      }
-    }
-  },
-  "security": [
-    {
-      "ApiKeyAuth": []
-    }
-  ]
+  }
 }

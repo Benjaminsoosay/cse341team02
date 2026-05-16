@@ -1,32 +1,27 @@
 {
-  "name": "temple-api",
+  "name": "contacts-api",
   "version": "1.0.0",
-  "description": "LDS Temple API for BYU-Idaho WDD230 student projects",
-  "main": "index.js",
+  "description": "Contacts REST API with validation and error handling",
+  "main": "server.js",
   "scripts": {
-    "start": "nodemon index.js",
-    "swagger": "node ./swagger.js",
+    "start": "node server.js",
+    "dev": "nodemon server.js",
+    "swagger": "node swagger.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/nathanbirch/temple-api.git"
-  },
-  "author": "Nathan Birch",
+  "author": "Your Name",
   "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/nathanbirch/temple-api/issues"
-  },
-  "homepage": "https://github.com/nathanbirch/temple-api#readme",
   "dependencies": {
     "cors": "^2.8.5",
     "dotenv": "^10.0.0",
     "express": "^4.17.1",
+    "express-session": "^1.19.0",
     "mongoose": "^6.0.14",
-    "nodemon": "^2.0.15",
-    "swagger-ui-express": "^5.0.1"
+    "swagger-ui-express": "^5.0.1",
+    "validate.js": "^0.13.1"
   },
   "devDependencies": {
+    "nodemon": "^2.0.15",
     "swagger-autogen": "^2.23.7"
   }
 }
