@@ -10,16 +10,6 @@
   "schemes": ["https"],
 
   "paths": {
-    "/api-docs": {
-      "get": {
-        "description": "Swagger documentation UI",
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        }
-      }
-    },
 
     "/contacts": {
       "get": {
