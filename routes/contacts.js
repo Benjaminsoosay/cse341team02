@@ -1,118 +1,185 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const mongoose = require('mongoose');
-const validate = require('validate.js');
+const { ObjectId } = require("mongodb");
+const mongodb = require("../db/connect");
+const { verifyToken } = require("../middleware/validation");
+const { 
+  validateContact, 
+  validateObjectId,
+  sanitizeInput 
+} = require("../utils/validation-helpers");
 
-// Mongoose Contact Schema
-const contactSchema = new mongoose.Schema({
-  firstName: { type: String, required: true },
-  lastName: { type: String, required: true },
-  email: { type: String, required: true },
-  favoriteColor: { type: String, required: true },
-  birthday: { type: String } // optional
-});
+// ==================== CONTROLLER FUNCTIONS ====================
 
-const Contact = mongoose.model('Contact', contactSchema);
-
-// Validation constraints (using validate.js)
-const contactConstraints = {
-  firstName: { presence: true, type: 'string' },
-  lastName: { presence: true, type: 'string' },
-  email: { presence: true, email: true },
-  favoriteColor: { presence: true, type: 'string' },
-  birthday: { type: 'string' } // optional
-};
-
-// Middleware to validate request body before creating/updating
-function validateContact(req, res, next) {
-  const errors = validate(req.body, contactConstraints);
-  if (errors) {
-    return res.status(412).json({ message: 'Validation failed', errors });
-  }
-  next();
-}
-
-// Helper to validate MongoDB ObjectId
-function isValidObjectId(id) {
-  return mongoose.Types.ObjectId.isValid(id);
-}
-
-// ---------- Routes ----------
-
-// GET all contacts
-router.get('/', async (req, res, next) => {
+// GET all contacts (for authenticated user)
+const getAllContacts = async (req, res, next) => {
   try {
-    const contacts = await Contact.find().exec();
+    const db = mongodb.getDb();
+    const userId = req.user ? req.user.userId : null;
+    
+    // If user is authenticated, get their contacts, otherwise get all (admin)
+    let query = {};
+    if (userId && req.user.role !== 'admin') {
+      query = { userId: userId };
+    }
+    
+    const contacts = await db.collection("contacts").find(query).toArray();
     res.status(200).json(contacts);
   } catch (err) {
-    next(err); // Pass to global error handler
+    next(err);
   }
-});
+};
 
 // GET single contact by ID
-router.get('/:id', async (req, res, next) => {
-  const { id } = req.params;
-  if (!isValidObjectId(id)) {
-    return res.status(400).json({ message: 'Must use a valid contact ID to find a contact' });
-  }
+const getSingleContact = async (req, res, next) => {
   try {
-    const contact = await Contact.findById(id).exec();
+    const db = mongodb.getDb();
+    const contactId = new ObjectId(req.params.id);
+    const userId = req.user ? req.user.userId : null;
+    
+    // Build query
+    let query = { _id: contactId };
+    if (userId && req.user.role !== 'admin') {
+      query.userId = userId;
+    }
+    
+    const contact = await db.collection("contacts").findOne(query);
+    
     if (!contact) {
-      return res.status(404).json({ message: 'Contact not found' });
+      return res.status(404).json({ message: "Contact not found" });
     }
     res.status(200).json(contact);
   } catch (err) {
     next(err);
   }
-});
+};
 
-// POST create new contact (with validation)
-router.post('/', validateContact, async (req, res, next) => {
+// POST create new contact
+const createContact = async (req, res, next) => {
   try {
-    const newContact = new Contact(req.body);
-    const saved = await newContact.save();
-    res.status(201).json(saved);
+    const db = mongodb.getDb();
+    
+    // Sanitize input
+    const sanitizedData = sanitizeInput(req.body);
+    
+    // Add metadata
+    const newContact = {
+      ...sanitizedData,
+      userId: req.user.userId,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    
+    const result = await db.collection("contacts").insertOne(newContact);
+    
+    if (result.acknowledged) {
+      res.status(201).json({ 
+        message: "Contact created successfully",
+        id: result.insertedId,
+        contact: { ...newContact, _id: result.insertedId }
+      });
+    } else {
+      res.status(500).json({ message: "Failed to create contact" });
+    }
   } catch (err) {
-    // Handle duplicate key, etc.
     if (err.code === 11000) {
-      return res.status(409).json({ message: 'Duplicate email or unique field' });
+      return res.status(409).json({ message: "Duplicate email address" });
     }
     next(err);
   }
-});
+};
 
-// PUT update contact by ID (with validation)
-router.put('/:id', validateContact, async (req, res, next) => {
-  const { id } = req.params;
-  if (!isValidObjectId(id)) {
-    return res.status(400).json({ message: 'Must use a valid contact ID to update a contact' });
-  }
+// PUT update contact by ID
+const updateContact = async (req, res, next) => {
   try {
-    const updated = await Contact.findByIdAndUpdate(id, req.body, { new: true, runValidators: true }).exec();
-    if (!updated) {
-      return res.status(404).json({ message: 'Contact not found' });
+    const db = mongodb.getDb();
+    const contactId = new ObjectId(req.params.id);
+    
+    // Check if contact exists and belongs to user
+    let query = { _id: contactId };
+    if (req.user.role !== 'admin') {
+      query.userId = req.user.userId;
     }
-    res.status(200).json(updated);
+    
+    const existingContact = await db.collection("contacts").findOne(query);
+    if (!existingContact) {
+      return res.status(404).json({ message: "Contact not found" });
+    }
+    
+    // Sanitize input and remove _id from update data
+    const sanitizedData = sanitizeInput(req.body);
+    delete sanitizedData._id;
+    delete sanitizedData.userId;
+    delete sanitizedData.createdAt;
+    
+    // Add updated timestamp
+    const updateData = {
+      ...sanitizedData,
+      updatedAt: new Date()
+    };
+    
+    const result = await db.collection("contacts").updateOne(
+      { _id: contactId },
+      { $set: updateData }
+    );
+    
+    if (result.modifiedCount > 0) {
+      const updatedContact = await db.collection("contacts").findOne({ _id: contactId });
+      res.status(200).json({ 
+        message: "Contact updated successfully",
+        contact: updatedContact
+      });
+    } else {
+      res.status(404).json({ message: "Contact not found or no changes made" });
+    }
   } catch (err) {
+    if (err.code === 11000) {
+      return res.status(409).json({ message: "Duplicate email address" });
+    }
     next(err);
   }
-});
+};
 
 // DELETE contact by ID
-router.delete('/:id', async (req, res, next) => {
-  const { id } = req.params;
-  if (!isValidObjectId(id)) {
-    return res.status(400).json({ message: 'Must use a valid contact ID to delete a contact' });
-  }
+const deleteContact = async (req, res, next) => {
   try {
-    const deleted = await Contact.findByIdAndDelete(id).exec();
-    if (!deleted) {
-      return res.status(404).json({ message: 'Contact not found' });
+    const db = mongodb.getDb();
+    const contactId = new ObjectId(req.params.id);
+    
+    // Build query based on user role
+    let query = { _id: contactId };
+    if (req.user.role !== 'admin') {
+      query.userId = req.user.userId;
     }
-    res.status(200).json({ message: 'Contact deleted successfully' });
+    
+    const result = await db.collection("contacts").deleteOne(query);
+    
+    if (result.deletedCount > 0) {
+      res.status(200).json({ 
+        message: "Contact deleted successfully",
+        id: req.params.id
+      });
+    } else {
+      res.status(404).json({ message: "Contact not found" });
+    }
   } catch (err) {
     next(err);
   }
-});
+};
+
+// ==================== ROUTES ====================
+
+// Public routes (no auth required for reading - optional)
+// Remove these if you want all routes to require authentication
+router.get("/", getAllContacts);
+router.get("/:id", validateObjectId, getSingleContact);
+
+// Protected routes (require authentication)
+router.post("/", verifyToken, validateContact, createContact);
+router.put("/:id", verifyToken, validateObjectId, validateContact, updateContact);
+router.delete("/:id", verifyToken, validateObjectId, deleteContact);
+
+// Admin-only routes (example)
+// router.delete("/admin/:id", verifyToken, requireAdmin, validateObjectId, adminDeleteContact);
 
 module.exports = router;

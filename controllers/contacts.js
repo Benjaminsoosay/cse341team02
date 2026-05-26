@@ -1,9 +1,7 @@
 const mongodb = require("../db/connect");
 const { ObjectId } = require("mongodb");
 
-/* =========================
-   GET ALL CONTACTS
-========================= */
+// GET ALL CONTACTS
 const getAll = (req, res) => {
   let limit = parseInt(req.query.limit);
 
@@ -13,8 +11,7 @@ const getAll = (req, res) => {
 
   mongodb
     .getDb()
-    .db()
-    .collection("contacts")
+    .collection("contacts")  // REMOVED extra .db()
     .find()
     .limit(limit)
     .toArray()
@@ -29,9 +26,7 @@ const getAll = (req, res) => {
     });
 };
 
-/* =========================
-   GET SINGLE CONTACT
-========================= */
+// GET SINGLE CONTACT
 const getSingle = (req, res) => {
   const contactId = req.params.id;
 
@@ -44,8 +39,7 @@ const getSingle = (req, res) => {
 
   mongodb
     .getDb()
-    .db()
-    .collection("contacts")
+    .collection("contacts")  // REMOVED extra .db()
     .findOne({ _id: new ObjectId(contactId) })
     .then((result) => {
       if (!result) {
@@ -79,8 +73,7 @@ const createContact = async (req, res) => {
 
     const response = await mongodb
       .getDb()
-      .db()
-      .collection("contacts")
+      .collection("contacts")  // REMOVED extra .db()
       .insertOne(contact);
 
     if (response.acknowledged) {
@@ -101,9 +94,7 @@ const createContact = async (req, res) => {
   }
 };
 
-/* =========================
-   UPDATE CONTACT
-========================= */
+// UPDATE CONTACT
 const updateContact = async (req, res) => {
   const contactId = req.params.id;
 
@@ -125,8 +116,7 @@ const updateContact = async (req, res) => {
   try {
     const response = await mongodb
       .getDb()
-      .db()
-      .collection("contacts")
+      .collection("contacts")  // REMOVED extra .db()
       .updateOne(
         { _id: new ObjectId(contactId) },
         { $set: contact }
@@ -155,9 +145,7 @@ const updateContact = async (req, res) => {
   }
 };
 
-/* =========================
-   DELETE CONTACT
-========================= */
+// DELETE CONTACT
 const deleteContact = (req, res) => {
   const contactId = req.params.id;
 
@@ -170,8 +158,7 @@ const deleteContact = (req, res) => {
 
   mongodb
     .getDb()
-    .db()
-    .collection("contacts")
+    .collection("contacts")  // REMOVED extra .db()
     .deleteOne({ _id: new ObjectId(contactId) })
     .then((response) => {
       if (response.deletedCount > 0) {
@@ -192,9 +179,7 @@ const deleteContact = (req, res) => {
     });
 };
 
-/* =========================
-   EXPORTS
-========================= */
+// EXPORTS
 module.exports = {
   getAll,
   getSingle,
