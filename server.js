@@ -51,7 +51,7 @@ app.get('/api/swagger.json', (req, res) => {
   res.json(swaggerDocument);
 });
 
-// ===== Swagger UI Setup - Point to the swagger.json endpoint =====
+// ===== Swagger UI Setup with OAuth2 Configuration =====
 const swaggerOptions = {
   swaggerOptions: {
     url: '/swagger.json',  // This tells Swagger UI where to find your API spec
@@ -66,6 +66,16 @@ const swaggerOptions = {
     tryItOutEnabled: true,
     filter: true,
     displayRequestDuration: true,
+    // ADD THIS OAuth2 CONFIGURATION:
+    oauth2RedirectUrl: 'https://cse341team02.onrender.com/api-docs/oauth2-redirect.html',
+    authorizations: {
+      'google-oauth': {
+        clientId: '752967943648-jeqkv3acpdoqn6kf85v11d40ltjkd50q.apps.googleusercontent.com',
+        clientSecret: process.env.GOOGLE_CLIENT_SECRET || 'your-client-secret-here', // Store in .env file!
+        scopes: ['profile', 'email', 'openid'],
+        usePkceWithAuthorizationCodeGrant: true  // Recommended for Google OAuth
+      }
+    }
   },
   customCss: '.swagger-ui .topbar { display: none }',
   customSiteTitle: "CSE341 Team 02 - Final Project API Documentation",
@@ -73,6 +83,11 @@ const swaggerOptions = {
 };
 
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument, swaggerOptions));
+
+// Also add the OAuth2 redirect handler (important!)
+app.get('/api-docs/oauth2-redirect.html', (req, res) => {
+  res.redirect('https://unpkg.com/swagger-ui-dist@5/oauth2-redirect.html');
+});
 
 // Optional: Add a redirect from /api-docs.json to your swagger.json
 app.get('/api-docs.json', (req, res) => {
