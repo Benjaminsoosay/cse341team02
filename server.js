@@ -7,6 +7,7 @@ const dotenv = require("dotenv");
 const swaggerUi = require("swagger-ui-express");
 const swaggerDocument = require("./swagger.json");
 const connectDB = require("./db");
+const { OAuth2Client } = require('google-auth-library');
 
 dotenv.config();
 
@@ -15,43 +16,118 @@ const PORT = process.env.PORT || 8080;
 
 // IMPORTANT: Enable CORS for all routes
 app.use(cors({
-  origin: '*', // Allow all origins for testing
+  origin: '*',
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Origin', 'X-Requested-With'],
   credentials: true
 }));
 
-// Handle preflight requests
 app.options('*', cors());
 
-// Security Middleware (but don't block CORS)
 app.use(helmet({
   crossOriginResourcePolicy: { policy: "cross-origin" },
   crossOriginOpenerPolicy: { policy: "unsafe-none" }
 }));
 
-// Body parsing middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
-// Static files
 app.use(express.static("public"));
 
-// ===== IMPORTANT: Serve swagger.json at a dedicated endpoint =====
+// Session configuration (MUST be before OAuth routes)
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET || "default-secret-key-change-this",
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      secure: process.env.NODE_ENV === "production",
+      httpOnly: true,
+      maxAge: 24 * 60 * 60 * 1000,
+    },
+  })
+);
+
+// ===== GOOGLE OAUTH ROUTES =====
+const googleClient = new OAuth2Client(
+  '752967943648-jeqkv3acpdoqn6kf85v11d40ltjkd50q.apps.googleusercontent.com',
+  process.env.GOOGLE_CLIENT_SECRET,
+  'https://cse341team02.onrender.com/auth/google/callback'
+);
+
+// 1. Initiate Google login - THIS WAS MISSING
+app.get('/auth/google', (req, res) => {
+  const authUrl = googleClient.generateAuthUrl({
+    access_type: 'offline',
+    scope: ['profile', 'email', 'openid'],
+    prompt: 'consent'
+  });
+  res.redirect(authUrl);
+});
+
+// 2. Google OAuth callback - THIS WAS MISSING
+app.get('/auth/google/callback', async (req, res) => {
+  const { code } = req.query;
+  
+  if (!code) {
+    return res.status(400).json({ error: 'No authorization code provided' });
+  }
+  
+  try {
+    const { tokens } = await googleClient.getToken(code);
+    const ticket = await googleClient.verifyIdToken({
+      idToken: tokens.id_token,
+      audience: '752967943648-jeqkv3acpdoqn6kf85v11d40ltjkd50q.apps.googleusercontent.com'
+    });
+    
+    const payload = ticket.getPayload();
+    
+    req.session.user = {
+      id: payload.sub,
+      email: payload.email,
+      name: payload.name,
+      picture: payload.picture
+    };
+    
+    res.redirect('/api-docs');
+  } catch (error) {
+    console.error('OAuth error:', error);
+    res.status(500).json({ error: 'Authentication failed', details: error.message });
+  }
+});
+
+// 3. Check auth status
+app.get('/auth/status', (req, res) => {
+  if (req.session.user) {
+    res.json({ authenticated: true, user: req.session.user });
+  } else {
+    res.json({ authenticated: false, user: null });
+  }
+});
+
+// 4. Logout
+app.get('/auth/logout', (req, res) => {
+  req.session.destroy((err) => {
+    if (err) {
+      return res.status(500).json({ error: 'Logout failed' });
+    }
+    res.json({ message: 'Successfully logged out' });
+  });
+});
+
+// ===== IMPORTANT: Serve swagger.json =====
 app.get('/swagger.json', (req, res) => {
   res.setHeader('Content-Type', 'application/json');
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.json(swaggerDocument);
 });
 
-// Also serve it at /api/swagger.json as backup
 app.get('/api/swagger.json', (req, res) => {
   res.setHeader('Content-Type', 'application/json');
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.json(swaggerDocument);
 });
 
-// ===== OAuth2 Redirect Handler (MUST be before Swagger UI setup) =====
+// ===== OAuth2 Redirect Handler for Swagger UI =====
 app.get('/api-docs/oauth2-redirect.html', (req, res) => {
   res.send(`
     <!DOCTYPE html>
@@ -79,40 +155,24 @@ app.get('/api-docs/oauth2-redirect.html', (req, res) => {
   `);
 });
 
-// ===== Swagger UI Setup with OAuth2 Configuration =====
+// ===== Swagger UI Setup =====
 const swaggerOptions = {
   swaggerOptions: {
-    url: '/swagger.json',  // This tells Swagger UI where to find your API spec
-    urls: [
-      {
-        url: '/swagger.json',
-        name: 'API v1'
-      }
-    ],
+    url: '/swagger.json',
+    urls: [{ url: '/swagger.json', name: 'API v1' }],
     docExpansion: 'list',
     defaultModelsExpandDepth: 3,
     tryItOutEnabled: true,
     filter: true,
     displayRequestDuration: true,
-    // ADD THIS OAuth2 CONFIGURATION:
     oauth2RedirectUrl: 'https://cse341team02.onrender.com/api-docs/oauth2-redirect.html',
-    authorizations: {
-      'google-oauth': {
-        clientId: '752967943648-jeqkv3acpdoqn6kf85v11d40ltjkd50q.apps.googleusercontent.com',
-        clientSecret: process.env.GOOGLE_CLIENT_SECRET || 'your-client-secret-here', // Store in .env file!
-        scopes: ['profile', 'email', 'openid'],
-        usePkceWithAuthorizationCodeGrant: true  // Recommended for Google OAuth
-      }
-    }
   },
   customCss: '.swagger-ui .topbar { display: none }',
   customSiteTitle: "CSE341 Team 02 - Final Project API Documentation",
-  customfavIcon: "",
 };
 
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument, swaggerOptions));
 
-// Optional: Add a redirect from /api-docs.json to your swagger.json
 app.get('/api-docs.json', (req, res) => {
   res.redirect('/swagger.json');
 });
@@ -124,20 +184,6 @@ const limiter = rateLimit({
   message: "Too many requests from this IP, please try again later."
 });
 app.use("/api", limiter);
-
-// Session configuration
-app.use(
-  session({
-    secret: process.env.SESSION_SECRET || "default-secret-key-change-this",
-    resave: false,
-    saveUninitialized: false,
-    cookie: {
-      secure: process.env.NODE_ENV === "production",
-      httpOnly: true,
-      maxAge: 24 * 60 * 60 * 1000,
-    },
-  })
-);
 
 // Your routes
 const contactsRoutes = require("./routes");
@@ -166,15 +212,11 @@ app.get("/", (req, res) => {
   });
 });
 
-// Login route
 app.get("/login", (req, res) => {
   res.json({ 
     message: "Login page",
-    note: "Please use OAuth authentication via GitHub/Google",
-    oauth_endpoints: {
-      github: "/auth/github",
-      google: "/auth/google"
-    }
+    note: "Please use OAuth authentication via Google",
+    oauth_endpoints: { google: "/auth/google" }
   });
 });
 
@@ -202,7 +244,6 @@ connectDB().then(() => {
     console.log(`📚 API Documentation: https://cse341team02.onrender.com/api-docs`);
     console.log(`📄 Swagger JSON: https://cse341team02.onrender.com/swagger.json`);
     console.log(`🏠 Home route: https://cse341team02.onrender.com`);
-    console.log(`🔒 Environment: ${process.env.NODE_ENV || "development"}`);
   });
 }).catch(err => {
   console.error("Failed to connect to MongoDB:", err);
