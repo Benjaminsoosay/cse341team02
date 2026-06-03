@@ -151,7 +151,7 @@ const deleteUser = async (req, res) => {
   
   try {
     const response = await mongodb
-      .getDb()  // ✅ REMOVED .db()
+      .getDb() 
       .collection("users")
       .deleteOne({ _id: new ObjectId(userId) });
     
@@ -169,7 +169,7 @@ const deleteUser = async (req, res) => {
 const getMyProfile = async (req, res) => {
   try {
     const user = await mongodb
-      .getDb()  // ✅ REMOVED .db()
+      .getDb()  
       .collection("users")
       .findOne({ _id: new ObjectId(req.user.userId) }, { projection: { password: 0 } });
     
