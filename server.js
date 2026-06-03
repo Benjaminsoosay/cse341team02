@@ -51,6 +51,34 @@ app.get('/api/swagger.json', (req, res) => {
   res.json(swaggerDocument);
 });
 
+// ===== OAuth2 Redirect Handler (MUST be before Swagger UI setup) =====
+app.get('/api-docs/oauth2-redirect.html', (req, res) => {
+  res.send(`
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>OAuth2 Redirect</title>
+    </head>
+    <body>
+      <script>
+        (function () {
+          var oauth2 = window.opener.swaggerUIRedirectOauth2;
+          var sentState = oauth2.state;
+          var receivedState = decodeURIComponent((new RegExp('[?|&]state=' + '([^&;]+?)(&|#|;|$)').exec(location.search) || [null, ''])[1].replace(/\\+/g, '%20')) || null;
+          if (receivedState !== sentState) {
+            return;
+          }
+          oauth2.callback({
+            code: (new RegExp('[?|&]code=' + '([^&;]+?)(&|#|;|$)').exec(location.search) || [null, ''])[1],
+            error: (new RegExp('[?|&]error=' + '([^&;]+?)(&|#|;|$)').exec(location.search) || [null, ''])[1]
+          });
+        })();
+      </script>
+    </body>
+    </html>
+  `);
+});
+
 // ===== Swagger UI Setup with OAuth2 Configuration =====
 const swaggerOptions = {
   swaggerOptions: {
@@ -83,11 +111,6 @@ const swaggerOptions = {
 };
 
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument, swaggerOptions));
-
-// Also add the OAuth2 redirect handler (important!)
-app.get('/api-docs/oauth2-redirect.html', (req, res) => {
-  res.redirect('https://unpkg.com/swagger-ui-dist@5/oauth2-redirect.html');
-});
 
 // Optional: Add a redirect from /api-docs.json to your swagger.json
 app.get('/api-docs.json', (req, res) => {
