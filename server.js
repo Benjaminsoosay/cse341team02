@@ -143,6 +143,7 @@ app.get('/auth/google', (req, res) => {
   res.redirect(authUrl);
 });
 
+// UPDATED OAuth Callback - Creates user directly in database
 app.get('/auth/google/callback', async (req, res) => {
   const { code } = req.query;
   
@@ -171,40 +172,78 @@ app.get('/auth/google/callback', async (req, res) => {
     
     const tokens = await tokenResponse.json();
     
-    // Call your internal /users/google-auth endpoint
-    const userResponse = await fetch(`https://cse341team02.onrender.com/users/google-auth`, {
-      method: 'POST',
-      headers: { 
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
-      },
-      body: JSON.stringify({ token: tokens.id_token })
+    // Get user info from Google
+    const userInfoResponse = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+      headers: { 'Authorization': `Bearer ${tokens.access_token}` }
     });
+    const userInfo = await userInfoResponse.json();
     
-    if (!userResponse.ok) {
-      throw new Error('Failed to authenticate user with our API');
+    // Create or update user in database
+    const db = getDb();
+    const usersCollection = db.collection('users');
+    
+    let user = await usersCollection.findOne({ email: userInfo.email });
+    
+    if (!user) {
+      // Create new user
+      const newUser = {
+        email: userInfo.email,
+        name: userInfo.name,
+        avatar: userInfo.picture,
+        googleId: userInfo.id,
+        role: 'user', // Default role
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        lastLogin: new Date()
+      };
+      
+      const result = await usersCollection.insertOne(newUser);
+      user = { _id: result.insertedId, ...newUser };
+      console.log(`✅ New user created: ${userInfo.email}`);
+    } else {
+      // Update existing user
+      await usersCollection.updateOne(
+        { email: userInfo.email },
+        { 
+          $set: { 
+            name: userInfo.name,
+            avatar: userInfo.picture,
+            lastLogin: new Date(),
+            updatedAt: new Date()
+          } 
+        }
+      );
+      user.lastLogin = new Date();
+      console.log(`🔄 User updated: ${userInfo.email}`);
     }
     
-    const userData = await userResponse.json();
-    
-    // Store token in session
+    // Store in session
     req.session.accessToken = tokens.access_token;
-    req.session.user = userData.user || userData;
+    req.session.user = user;
+    req.session.userId = user._id;
     
-    // Send success response with token
+    // Send success response
     res.json({
       success: true,
       access_token: tokens.access_token,
       refresh_token: tokens.refresh_token,
       expires_in: tokens.expires_in,
-      user: userData.user || userData,
+      user: {
+        id: user._id,
+        email: user.email,
+        name: user.name,
+        avatar: user.avatar,
+        role: user.role
+      },
       message: 'Authentication successful'
     });
+    
   } catch (error) {
     console.error('OAuth callback error:', error);
     res.status(500).json({ 
       error: 'Authentication failed',
-      message: error.message 
+      message: error.message,
+      details: error.toString()
     });
   }
 });
@@ -310,6 +349,26 @@ app.get('/test-db', async (req, res) => {
   }
 });
 
+// Public users endpoint (temporary - remove in production)
+app.get('/public-users', async (req, res) => {
+  try {
+    const db = getDb();
+    const users = await db.collection('users').find({}).toArray();
+    res.json({
+      count: users.length,
+      users: users.map(u => ({
+        id: u._id,
+        name: u.name,
+        email: u.email,
+        role: u.role,
+        createdAt: u.createdAt
+      }))
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // 404 handler
 app.use((req, res) => {
   res.status(404).json({ 
@@ -344,5 +403,6 @@ initDb((err, db) => {
     console.log(`🔒 Environment: ${process.env.NODE_ENV || "development"}`);
     console.log(`🗄️ Database: Connected to ${db.databaseName}`);
     console.log(`🔐 Google OAuth: https://cse341team02.onrender.com/auth/google`);
+    console.log(`👥 Public Users: https://cse341team02.onrender.com/public-users`);
   });
 });
