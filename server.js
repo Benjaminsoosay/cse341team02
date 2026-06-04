@@ -45,59 +45,23 @@ app.get('/api/swagger.json', (req, res) => {
   res.json(swaggerDocument);
 });
 
-// OAuth redirect for Swagger
-app.get('/api-docs/oauth2-redirect.html', (req, res) => {
-  const redirectHtml = `<!DOCTYPE html>
-<html>
-<head>
-  <title>Swagger UI OAuth2 Redirect</title>
-</head>
-<body>
-  <script>
-    try {
-      var authResult = window.location.hash.substring(1).split('&').reduce(function(res, item) {
-        var parts = item.split('=');
-        res[parts[0]] = parts[1];
-        return res;
-      }, {});
-      
-      window.opener.postMessage({
-        type: 'oauth2',
-        response: authResult
-      }, '*');
-      window.close();
-    } catch(e) {
-      console.error('OAuth redirect error:', e);
-    }
-  </script>
-</body>
-</html>`;
-  res.send(redirectHtml);
-});
-
-// Swagger UI options
+// Swagger UI options - NO AUTHENTICATION
 const swaggerOptions = {
   swaggerOptions: {
     url: '/swagger.json',
-    oauth2RedirectUrl: 'https://cse341team02.onrender.com/api-docs/oauth2-redirect.html',
-    oauth: {
-      clientId: process.env.GOOGLE_CLIENT_ID,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      appName: 'CSE341 Team 02',
-      scopeSeparator: ' ',
-      usePkceWithAuthorizationCodeGrant: false
-    },
     docExpansion: 'list',
     defaultModelsExpandDepth: 3,
     tryItOutEnabled: true,
     filter: true,
     displayRequestDuration: true,
-    requestInterceptor: (request) => {
-      request.credentials = 'same-origin';
-      return request;
-    }
+    // Disable all authorization UI
+    authAction: {},
+    authorizations: {},
+    displayOperationId: false,
+    tagsSorter: 'alpha',
+    operationsSorter: 'alpha'
   },
-  customCss: '.swagger-ui .topbar { display: none }',
+  customCss: '.swagger-ui .topbar { display: none } .authorization-btn { display: none !important; } .auth-wrapper { display: none !important; }',
   customSiteTitle: "CSE341 Team 02 - Final Project API Documentation",
 };
 
@@ -397,12 +361,12 @@ initDb((err, db) => {
   
   app.listen(PORT, () => {
     console.log(`🚀 Server running on port ${PORT}`);
-    console.log(`📚 API Documentation: https://cse341team02.onrender.com/api-docs`);
-    console.log(`📄 Swagger JSON: https://cse341team02.onrender.com/swagger.json`);
-    console.log(`🏠 Home route: https://cse341team02.onrender.com`);
+    console.log(`📚 API Documentation: http://localhost:${PORT}/api-docs`);
+    console.log(`📄 Swagger JSON: http://localhost:${PORT}/swagger.json`);
+    console.log(`🏠 Home route: http://localhost:${PORT}`);
     console.log(`🔒 Environment: ${process.env.NODE_ENV || "development"}`);
     console.log(`🗄️ Database: Connected to ${db.databaseName}`);
-    console.log(`🔐 Google OAuth: https://cse341team02.onrender.com/auth/google`);
-    console.log(`👥 Public Users: https://cse341team02.onrender.com/public-users`);
+    console.log(`🔐 Google OAuth: http://localhost:${PORT}/auth/google`);
+    console.log(`👥 Public Users: http://localhost:${PORT}/public-users`);
   });
-});
+})

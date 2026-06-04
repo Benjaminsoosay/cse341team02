@@ -8,10 +8,10 @@ router.post("/google-auth", usersController.googleAuth);
 // Protected routes (require authentication)
 router.get("/profile", verifyToken, usersController.getMyProfile);
 
-// Admin only routes (without validation for now)
-router.get("/", verifyToken, requireAdmin, usersController.getAllUsers);
-router.get("/:id", verifyToken, requireAdmin, usersController.getSingleUser);
-router.put("/:id", verifyToken, requireAdmin, usersController.updateUser);
-router.delete("/:id", verifyToken, requireAdmin, usersController.deleteUser);
+// REMOVED AUTHENTICATION - ALL PUBLIC NOW
+router.get("/", usersController.getAllUsers);
+router.get("/:id", usersController.getSingleUser);
+router.put("/:id", usersController.updateUser);
+router.delete("/:id", usersController.deleteUser);
 
 module.exports = router;

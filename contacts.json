@@ -2,22 +2,141 @@
   {
     "firstName": "Sarah",
     "lastName": "Birch",
-    "email": "amazingwoman@test.com",
+    "email": "sarah.birch@example.com",
     "favoriteColor": "Green",
-    "birthday": "12/12/20"
+    "birthday": "2000-12-12"
   },
   {
     "firstName": "Jimmy",
     "lastName": "Carter",
-    "email": "jCarter@test.com",
+    "email": "jimmy.carter@example.com",
     "favoriteColor": "Purple",
-    "birthday": "07/12/10"
+    "birthday": "1990-07-12"
   },
   {
     "firstName": "Cassandra",
     "lastName": "Anderson",
-    "email": "AndersonC@test.com",
+    "email": "cassandra.anderson@example.com",
     "favoriteColor": "Yellow",
-    "birthday": "02/22/95"
+    "birthday": "1995-02-22"
+  },
+  {
+    "firstName": "Michael",
+    "lastName": "Chen",
+    "email": "michael.chen@example.com",
+    "favoriteColor": "Blue",
+    "birthday": "1988-03-15"
+  },
+  {
+    "firstName": "Jessica",
+    "lastName": "Williams",
+    "email": "jessica.williams@example.com",
+    "favoriteColor": "Red",
+    "birthday": "1992-06-22"
+  },
+  {
+    "firstName": "David",
+    "lastName": "Rodriguez",
+    "email": "david.rodriguez@example.com",
+    "favoriteColor": "Orange",
+    "birthday": "1985-11-05"
+  },
+  {
+    "firstName": "Emily",
+    "lastName": "Patel",
+    "email": "emily.patel@example.com",
+    "favoriteColor": "Pink",
+    "birthday": "1995-09-30"
+  },
+  {
+    "firstName": "Christopher",
+    "lastName": "Kim",
+    "email": "christopher.kim@example.com",
+    "favoriteColor": "Black",
+    "birthday": "1991-01-18"
+  },
+  {
+    "firstName": "Amanda",
+    "lastName": "Thompson",
+    "email": "amanda.thompson@example.com",
+    "favoriteColor": "White",
+    "birthday": "1993-05-27"
+  },
+  {
+    "firstName": "Daniel",
+    "lastName": "Garcia",
+    "email": "daniel.garcia@example.com",
+    "favoriteColor": "Brown",
+    "birthday": "1987-10-12"
+  },
+  {
+    "firstName": "Stephanie",
+    "lastName": "Martinez",
+    "email": "stephanie.martinez@example.com",
+    "favoriteColor": "Teal",
+    "birthday": "1996-04-03"
+  },
+  {
+    "firstName": "Kevin",
+    "lastName": "Robinson",
+    "email": "kevin.robinson@example.com",
+    "favoriteColor": "Cyan",
+    "birthday": "1989-08-19"
+  },
+  {
+    "firstName": "Rachel",
+    "lastName": "Lewis",
+    "email": "rachel.lewis@example.com",
+    "favoriteColor": "Magenta",
+    "birthday": "1994-12-25"
+  },
+  {
+    "firstName": "Brian",
+    "lastName": "Walker",
+    "email": "brian.walker@example.com",
+    "favoriteColor": "Lime",
+    "birthday": "1986-02-14"
+  },
+  {
+    "firstName": "Michelle",
+    "lastName": "Hall",
+    "email": "michelle.hall@example.com",
+    "favoriteColor": "Indigo",
+    "birthday": "1997-07-07"
+  },
+  {
+    "firstName": "Jason",
+    "lastName": "Allen",
+    "email": "jason.allen@example.com",
+    "favoriteColor": "Gold",
+    "birthday": "1990-09-09"
+  },
+  {
+    "firstName": "Laura",
+    "lastName": "Young",
+    "email": "laura.young@example.com",
+    "favoriteColor": "Silver",
+    "birthday": "1992-03-03"
+  },
+  {
+    "firstName": "Matthew",
+    "lastName": "King",
+    "email": "matthew.king@example.com",
+    "favoriteColor": "Maroon",
+    "birthday": "1988-11-11"
+  },
+  {
+    "firstName": "Nicole",
+    "lastName": "Wright",
+    "email": "nicole.wright@example.com",
+    "favoriteColor": "Navy",
+    "birthday": "1995-06-06"
+  },
+  {
+    "firstName": "Andrew",
+    "lastName": "Scott",
+    "email": "andrew.scott@example.com",
+    "favoriteColor": "Olive",
+    "birthday": "1991-10-20"
   }
 ]
