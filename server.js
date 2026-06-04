@@ -13,7 +13,6 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 8080;
 
-// IMPORTANT: Enable CORS for all routes with proper configuration
 app.use(cors({
   origin: ['https://cse341team02.onrender.com', 'http://localhost:8080', 'https://accounts.google.com'],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
@@ -21,38 +20,30 @@ app.use(cors({
   credentials: true
 }));
 
-// Handle preflight requests
 app.options('*', cors());
 
-// Security Middleware (but don't block CORS)
 app.use(helmet({
   crossOriginResourcePolicy: { policy: "cross-origin" },
   crossOriginOpenerPolicy: { policy: "unsafe-none" },
-  contentSecurityPolicy: false // Allows Swagger UI to work properly
+  contentSecurityPolicy: false
 }));
 
-// Body parsing middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
-// Static files
 app.use(express.static("public"));
 
-// ===== IMPORTANT: Serve swagger.json at a dedicated endpoint =====
 app.get('/swagger.json', (req, res) => {
   res.setHeader('Content-Type', 'application/json');
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.json(swaggerDocument);
 });
 
-// Also serve it at /api/swagger.json as backup
 app.get('/api/swagger.json', (req, res) => {
   res.setHeader('Content-Type', 'application/json');
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.json(swaggerDocument);
 });
 
-// ===== CRITICAL: Serve oauth2-redirect.html for Swagger OAuth =====
 app.get('/api-docs/oauth2-redirect.html', (req, res) => {
   const redirectHtml = `<!DOCTYPE html>
 <html>
@@ -82,7 +73,6 @@ app.get('/api-docs/oauth2-redirect.html', (req, res) => {
   res.send(redirectHtml);
 });
 
-// ===== Swagger UI Setup with OAuth Configuration =====
 const swaggerOptions = {
   swaggerOptions: {
     url: '/swagger.json',
@@ -110,12 +100,10 @@ const swaggerOptions = {
 
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument, swaggerOptions));
 
-// Optional: Add a redirect from /api-docs.json to your swagger.json
 app.get('/api-docs.json', (req, res) => {
   res.redirect('/swagger.json');
 });
 
-// Rate limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 100,
@@ -123,7 +111,6 @@ const limiter = rateLimit({
 });
 app.use("/api", limiter);
 
-// Session configuration
 app.use(
   session({
     secret: process.env.SESSION_SECRET || "default-secret-key-change-this",
@@ -137,7 +124,6 @@ app.use(
   })
 );
 
-// Your routes - MAKE SURE THESE FILES EXIST
 const contactsRoutes = require("./routes");
 const usersRoutes = require("./routes/users");
 const eventsRoutes = require("./routes/events");
@@ -148,7 +134,6 @@ app.use("/users", usersRoutes);
 app.use("/events", eventsRoutes);
 app.use("/rsvps", rsvpsRoutes);
 
-// Google OAuth routes (ADD THESE if not in your routes files)
 app.get("/auth/google", (req, res) => {
   res.json({ message: "Google OAuth login endpoint", redirect: "/auth/google/callback" });
 });
@@ -157,7 +142,7 @@ app.get("/auth/google/callback", (req, res) => {
   res.json({ message: "Google OAuth callback endpoint" });
 });
 
-app.get("/auth/status", (req, req) => {
+app.get("/auth/status", (req, res) => {
   res.json({ authenticated: false, user: null });
 });
 
@@ -166,7 +151,6 @@ app.get("/auth/logout", (req, res) => {
   res.json({ message: "Logged out successfully" });
 });
 
-// Home route
 app.get("/", (req, res) => {
   res.json({
     message: "Final Project API - Welcome to the Contacts Management System",
@@ -182,7 +166,6 @@ app.get("/", (req, res) => {
   });
 });
 
-// Login route
 app.get("/login", (req, res) => {
   res.json({ 
     message: "Login page",
@@ -193,7 +176,6 @@ app.get("/login", (req, res) => {
   });
 });
 
-// 404 handler
 app.use((req, res) => {
   res.status(404).json({ 
     error: "Route not found",
@@ -201,7 +183,6 @@ app.use((req, res) => {
   });
 });
 
-// Global error handler
 app.use((err, req, res, next) => {
   console.error("Error stack:", err.stack);
   res.status(err.status || 500).json({
@@ -210,7 +191,6 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Connect to MongoDB and start server
 connectDB().then(() => {
   app.listen(PORT, () => {
     console.log(`🚀 Server running on port ${PORT}`);
