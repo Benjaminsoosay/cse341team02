@@ -117,4 +117,109 @@ app.get('/api-docs.json', (req, res) => {
 
 // Rate limiting
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  message: "Too many requests from this IP, please try again later."
+});
+app.use("/api", limiter);
+
+// Session configuration
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET || "default-secret-key-change-this",
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      secure: process.env.NODE_ENV === "production",
+      httpOnly: true,
+      maxAge: 24 * 60 * 60 * 1000,
+    },
+  })
+);
+
+// Your routes - MAKE SURE THESE FILES EXIST
+const contactsRoutes = require("./routes");
+const usersRoutes = require("./routes/users");
+const eventsRoutes = require("./routes/events");
+const rsvpsRoutes = require("./routes/rsvps");
+
+app.use("/contacts", contactsRoutes);
+app.use("/users", usersRoutes);
+app.use("/events", eventsRoutes);
+app.use("/rsvps", rsvpsRoutes);
+
+// Google OAuth routes (ADD THESE if not in your routes files)
+app.get("/auth/google", (req, res) => {
+  res.json({ message: "Google OAuth login endpoint", redirect: "/auth/google/callback" });
+});
+
+app.get("/auth/google/callback", (req, res) => {
+  res.json({ message: "Google OAuth callback endpoint" });
+});
+
+app.get("/auth/status", (req, req) => {
+  res.json({ authenticated: false, user: null });
+});
+
+app.get("/auth/logout", (req, res) => {
+  req.session.destroy();
+  res.json({ message: "Logged out successfully" });
+});
+
+// Home route
+app.get("/", (req, res) => {
+  res.json({
+    message: "Final Project API - Welcome to the Contacts Management System",
+    documentation: "/api-docs",
+    swaggerJson: "/swagger.json",
+    endpoints: {
+      contacts: "/contacts",
+      users: "/users",
+      events: "/events",
+      rsvps: "/rsvps",
+    },
+    version: "1.0.0",
+  });
+});
+
+// Login route
+app.get("/login", (req, res) => {
+  res.json({ 
+    message: "Login page",
+    note: "Please use OAuth authentication via Google",
+    oauth_endpoints: {
+      google: "/auth/google"
+    }
+  });
+});
+
+// 404 handler
+app.use((req, res) => {
+  res.status(404).json({ 
+    error: "Route not found",
+    message: `Cannot ${req.method} ${req.originalUrl}`
+  });
+});
+
+// Global error handler
+app.use((err, req, res, next) => {
+  console.error("Error stack:", err.stack);
+  res.status(err.status || 500).json({
+    error: "Something went wrong!",
+    message: process.env.NODE_ENV === "production" ? "Internal server error" : err.message,
+  });
+});
+
+// Connect to MongoDB and start server
+connectDB().then(() => {
+  app.listen(PORT, () => {
+    console.log(`🚀 Server running on port ${PORT}`);
+    console.log(`📚 API Documentation: https://cse341team02.onrender.com/api-docs`);
+    console.log(`📄 Swagger JSON: https://cse341team02.onrender.com/swagger.json`);
+    console.log(`🏠 Home route: https://cse341team02.onrender.com`);
+    console.log(`🔒 Environment: ${process.env.NODE_ENV || "development"}`);
+  });
+}).catch(err => {
+  console.error("Failed to connect to MongoDB:", err);
+  process.exit(1);
+});
