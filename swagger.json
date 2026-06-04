@@ -17,18 +17,6 @@
   "basePath": "/",
   "schemes": ["http"],
   "securityDefinitions": {
-    "google-oauth": {
-      "type": "oauth2",
-      "description": "Google OAuth 2.0 authentication for API access",
-      "authorizationUrl": "https://accounts.google.com/o/oauth2/auth",
-      "tokenUrl": "https://oauth2.googleapis.com/token",
-      "flow": "accessCode",
-      "scopes": {
-        "profile": "View your profile information",
-        "email": "View your email address",
-        "openid": "Authenticate with Google"
-      }
-    },
     "bearerAuth": {
       "type": "apiKey",
       "name": "Authorization",
@@ -40,6 +28,18 @@
       "name": "sessionId",
       "in": "cookie",
       "description": "Session ID cookie for maintaining authenticated sessions"
+    },
+    "google-oauth": {
+      "type": "oauth2",
+      "description": "Google OAuth 2.0 authentication for API access",
+      "authorizationUrl": "https://accounts.google.com/o/oauth2/auth",
+      "tokenUrl": "https://oauth2.googleapis.com/token",
+      "flow": "accessCode",
+      "scopes": {
+        "profile": "View your profile information",
+        "email": "View your email address",
+        "openid": "Authenticate with Google"
+      }
     }
   },
   "security": [
@@ -48,9 +48,6 @@
     },
     {
       "sessionCookie": []
-    },
-    {
-      "google-oauth": ["profile", "email", "openid"]
     }
   ],
   "paths": {
@@ -172,14 +169,6 @@
         "summary": "Check authentication status",
         "description": "Returns current user authentication status using session token",
         "produces": ["application/json"],
-        "security": [
-          {
-            "bearerAuth": []
-          },
-          {
-            "sessionCookie": []
-          }
-        ],
         "responses": {
           "200": {
             "description": "Authentication status",
@@ -212,14 +201,6 @@
         "summary": "Logout user",
         "description": "Ends the current user session and invalidates the token",
         "produces": ["application/json"],
-        "security": [
-          {
-            "bearerAuth": []
-          },
-          {
-            "sessionCookie": []
-          }
-        ],
         "responses": {
           "200": {
             "description": "Successfully logged out",
@@ -243,14 +224,6 @@
         "description": "Obtain a new session token using the current valid session",
         "consumes": ["application/json"],
         "produces": ["application/json"],
-        "security": [
-          {
-            "bearerAuth": []
-          },
-          {
-            "sessionCookie": []
-          }
-        ],
         "responses": {
           "200": {
             "description": "Token refreshed successfully",
@@ -274,14 +247,6 @@
         "summary": "Get all contacts",
         "description": "Retrieves a list of all contacts with optional pagination",
         "produces": ["application/json"],
-        "security": [
-          {
-            "bearerAuth": []
-          },
-          {
-            "sessionCookie": []
-          }
-        ],
         "parameters": [
           {
             "name": "limit",
@@ -326,14 +291,6 @@
         "description": "Creates a new contact with validation. All required fields must be provided.",
         "consumes": ["application/json"],
         "produces": ["application/json"],
-        "security": [
-          {
-            "bearerAuth": []
-          },
-          {
-            "sessionCookie": []
-          }
-        ],
         "parameters": [
           {
             "name": "body",
@@ -371,14 +328,6 @@
         "summary": "Get a single contact",
         "description": "Retrieves a contact by their unique ID",
         "produces": ["application/json"],
-        "security": [
-          {
-            "bearerAuth": []
-          },
-          {
-            "sessionCookie": []
-          }
-        ],
         "parameters": [
           {
             "name": "id",
@@ -411,14 +360,6 @@
         "description": "Updates an existing contact by ID. All fields are optional for update.",
         "consumes": ["application/json"],
         "produces": ["application/json"],
-        "security": [
-          {
-            "bearerAuth": []
-          },
-          {
-            "sessionCookie": []
-          }
-        ],
         "parameters": [
           {
             "name": "id",
@@ -464,14 +405,6 @@
         "summary": "Delete a contact",
         "description": "Permanently deletes a contact by ID",
         "produces": ["application/json"],
-        "security": [
-          {
-            "bearerAuth": []
-          },
-          {
-            "sessionCookie": []
-          }
-        ],
         "parameters": [
           {
             "name": "id",
@@ -512,14 +445,6 @@
         "summary": "Get all users",
         "description": "Retrieves a list of all registered users",
         "produces": ["application/json"],
-        "security": [
-          {
-            "bearerAuth": []
-          },
-          {
-            "sessionCookie": []
-          }
-        ],
         "responses": {
           "200": {
             "description": "List of users retrieved successfully",
@@ -543,6 +468,16 @@
         "description": "Registers a new user with OAuth authentication",
         "consumes": ["application/json"],
         "produces": ["application/json"],
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/UserInput"
+            }
+          }
+        ],
         "responses": {
           "201": {
             "description": "User created successfully"
@@ -564,14 +499,6 @@
         "summary": "Get a user by ID",
         "description": "Retrieves a specific user by their ID",
         "produces": ["application/json"],
-        "security": [
-          {
-            "bearerAuth": []
-          },
-          {
-            "sessionCookie": []
-          }
-        ],
         "parameters": [
           {
             "name": "id",
@@ -604,14 +531,6 @@
         "description": "Updates user information",
         "consumes": ["application/json"],
         "produces": ["application/json"],
-        "security": [
-          {
-            "bearerAuth": []
-          },
-          {
-            "sessionCookie": []
-          }
-        ],
         "parameters": [
           {
             "name": "id",
@@ -646,14 +565,6 @@
       "delete": {
         "summary": "Delete a user",
         "description": "Deletes a user account",
-        "security": [
-          {
-            "bearerAuth": []
-          },
-          {
-            "sessionCookie": []
-          }
-        ],
         "parameters": [
           {
             "name": "id",
@@ -683,14 +594,6 @@
         "summary": "Get all events",
         "description": "Retrieves all events with filtering options",
         "produces": ["application/json"],
-        "security": [
-          {
-            "bearerAuth": []
-          },
-          {
-            "sessionCookie": []
-          }
-        ],
         "parameters": [
           {
             "name": "status",
@@ -731,14 +634,6 @@
         "description": "Creates a new event with validation (minimum 7 fields)",
         "consumes": ["application/json"],
         "produces": ["application/json"],
-        "security": [
-          {
-            "bearerAuth": []
-          },
-          {
-            "sessionCookie": []
-          }
-        ],
         "parameters": [
           {
             "name": "body",
@@ -776,14 +671,6 @@
         "summary": "Get event by ID",
         "description": "Retrieves a specific event",
         "produces": ["application/json"],
-        "security": [
-          {
-            "bearerAuth": []
-          },
-          {
-            "sessionCookie": []
-          }
-        ],
         "parameters": [
           {
             "name": "id",
@@ -815,14 +702,6 @@
         "description": "Updates event information",
         "consumes": ["application/json"],
         "produces": ["application/json"],
-        "security": [
-          {
-            "bearerAuth": []
-          },
-          {
-            "sessionCookie": []
-          }
-        ],
         "parameters": [
           {
             "name": "id",
@@ -860,14 +739,6 @@
       "delete": {
         "summary": "Delete an event",
         "description": "Deletes an event",
-        "security": [
-          {
-            "bearerAuth": []
-          },
-          {
-            "sessionCookie": []
-          }
-        ],
         "parameters": [
           {
             "name": "id",
@@ -897,14 +768,6 @@
         "summary": "Get all RSVPs",
         "description": "Retrieves all RSVP responses",
         "produces": ["application/json"],
-        "security": [
-          {
-            "bearerAuth": []
-          },
-          {
-            "sessionCookie": []
-          }
-        ],
         "parameters": [
           {
             "name": "eventId",
@@ -937,14 +800,6 @@
         "description": "Creates an RSVP for an event",
         "consumes": ["application/json"],
         "produces": ["application/json"],
-        "security": [
-          {
-            "bearerAuth": []
-          },
-          {
-            "sessionCookie": []
-          }
-        ],
         "parameters": [
           {
             "name": "body",
@@ -976,14 +831,6 @@
         "summary": "Get RSVP by ID",
         "description": "Retrieves a specific RSVP",
         "produces": ["application/json"],
-        "security": [
-          {
-            "bearerAuth": []
-          },
-          {
-            "sessionCookie": []
-          }
-        ],
         "parameters": [
           {
             "name": "id",
@@ -1009,14 +856,6 @@
         "description": "Updates an existing RSVP",
         "consumes": ["application/json"],
         "produces": ["application/json"],
-        "security": [
-          {
-            "bearerAuth": []
-          },
-          {
-            "sessionCookie": []
-          }
-        ],
         "parameters": [
           {
             "name": "id",
@@ -1045,14 +884,6 @@
       "delete": {
         "summary": "Delete RSVP",
         "description": "Cancels an RSVP",
-        "security": [
-          {
-            "bearerAuth": []
-          },
-          {
-            "sessionCookie": []
-          }
-        ],
         "parameters": [
           {
             "name": "id",
@@ -1122,42 +953,13 @@
       "type": "object",
       "required": ["firstName", "lastName", "email", "favoriteColor"],
       "properties": {
-        "firstName": {
-          "type": "string",
-          "minLength": 1,
-          "maxLength": 50,
-          "example": "John"
-        },
-        "lastName": {
-          "type": "string",
-          "minLength": 1,
-          "maxLength": 50,
-          "example": "Doe"
-        },
-        "email": {
-          "type": "string",
-          "format": "email",
-          "example": "john@example.com"
-        },
-        "favoriteColor": {
-          "type": "string",
-          "example": "blue"
-        },
-        "birthday": {
-          "type": "string",
-          "format": "date",
-          "example": "1990-01-01"
-        },
-        "phoneNumber": {
-          "type": "string",
-          "pattern": "^\\+?[1-9]\\d{1,14}$",
-          "example": "+1234567890"
-        },
-        "address": {
-          "type": "string",
-          "maxLength": 200,
-          "example": "123 Main St"
-        }
+        "firstName": {"type": "string", "minLength": 1, "maxLength": 50, "example": "John"},
+        "lastName": {"type": "string", "minLength": 1, "maxLength": 50, "example": "Doe"},
+        "email": {"type": "string", "format": "email", "example": "john@example.com"},
+        "favoriteColor": {"type": "string", "example": "blue"},
+        "birthday": {"type": "string", "format": "date", "example": "1990-01-01"},
+        "phoneNumber": {"type": "string", "pattern": "^\\+?[1-9]\\d{1,14}$", "example": "+1234567890"},
+        "address": {"type": "string", "maxLength": 200, "example": "123 Main St"}
       }
     },
     "ContactUpdate": {
@@ -1273,4 +1075,16 @@
       "type": "object",
       "properties": {
         "status": {"type": "string", "enum": ["attending", "not_attending", "maybe"]},
-        "guests": {"type": "integer", "minimum":
+        "guests": {"type": "integer", "minimum": 0, "maximum": 10},
+        "dietaryRestrictions": {"type": "string"}
+      }
+    }
+  },
+  "tags": [
+    {"name": "Contacts", "description": "Contact management operations"},
+    {"name": "Users", "description": "User management and authentication"},
+    {"name": "Events", "description": "Event management operations (7+ fields)"},
+    {"name": "RSVPs", "description": "RSVP management for events"},
+    {"name": "Authentication", "description": "Google OAuth authentication endpoints"}
+  ]
+}
