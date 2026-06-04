@@ -6,7 +6,7 @@ const rateLimit = require("express-rate-limit");
 const dotenv = require("dotenv");
 const swaggerUi = require("swagger-ui-express");
 const swaggerDocument = require("./swagger.json");
-const connectDB = require("./db");
+const { initDb, getDb } = require("./db/connect");  // Change this line
 
 dotenv.config();
 
@@ -32,6 +32,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static("public"));
 
+// Serve swagger.json
 app.get('/swagger.json', (req, res) => {
   res.setHeader('Content-Type', 'application/json');
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -44,6 +45,7 @@ app.get('/api/swagger.json', (req, res) => {
   res.json(swaggerDocument);
 });
 
+// OAuth redirect for Swagger
 app.get('/api-docs/oauth2-redirect.html', (req, res) => {
   const redirectHtml = `<!DOCTYPE html>
 <html>
@@ -73,6 +75,7 @@ app.get('/api-docs/oauth2-redirect.html', (req, res) => {
   res.send(redirectHtml);
 });
 
+// Swagger UI options
 const swaggerOptions = {
   swaggerOptions: {
     url: '/swagger.json',
@@ -104,6 +107,7 @@ app.get('/api-docs.json', (req, res) => {
   res.redirect('/swagger.json');
 });
 
+// Rate limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 100,
@@ -111,6 +115,7 @@ const limiter = rateLimit({
 });
 app.use("/api", limiter);
 
+// Session configuration
 app.use(
   session({
     secret: process.env.SESSION_SECRET || "default-secret-key-change-this",
@@ -124,6 +129,7 @@ app.use(
   })
 );
 
+// Routes
 const contactsRoutes = require("./routes");
 const usersRoutes = require("./routes/users");
 const eventsRoutes = require("./routes/events");
@@ -134,6 +140,7 @@ app.use("/users", usersRoutes);
 app.use("/events", eventsRoutes);
 app.use("/rsvps", rsvpsRoutes);
 
+// Auth routes
 app.get("/auth/google", (req, res) => {
   res.json({ message: "Google OAuth login endpoint", redirect: "/auth/google/callback" });
 });
@@ -151,6 +158,7 @@ app.get("/auth/logout", (req, res) => {
   res.json({ message: "Logged out successfully" });
 });
 
+// Home route
 app.get("/", (req, res) => {
   res.json({
     message: "Final Project API - Welcome to the Contacts Management System",
@@ -176,6 +184,26 @@ app.get("/login", (req, res) => {
   });
 });
 
+// Test database endpoint
+app.get('/test-db', async (req, res) => {
+  try {
+    const db = getDb();
+    const collections = await db.listCollections().toArray();
+    res.json({ 
+      message: 'Database connected successfully',
+      collections: collections.map(c => c.name),
+      dbName: db.databaseName,
+      status: 'Connected'
+    });
+  } catch (error) {
+    res.status(500).json({ 
+      error: error.message,
+      message: 'Database not initialized yet. Try again in a moment.'
+    });
+  }
+});
+
+// 404 handler
 app.use((req, res) => {
   res.status(404).json({ 
     error: "Route not found",
@@ -183,6 +211,7 @@ app.use((req, res) => {
   });
 });
 
+// Global error handler
 app.use((err, req, res, next) => {
   console.error("Error stack:", err.stack);
   res.status(err.status || 500).json({
@@ -191,15 +220,21 @@ app.use((err, req, res, next) => {
   });
 });
 
-connectDB().then(() => {
+// Initialize database and start server - FIXED THIS SECTION
+initDb((err, db) => {
+  if (err) {
+    console.error('Failed to connect to MongoDB:', err);
+    process.exit(1);
+  }
+  
+  console.log('Database initialized successfully');
+  
   app.listen(PORT, () => {
     console.log(`🚀 Server running on port ${PORT}`);
     console.log(`📚 API Documentation: https://cse341team02.onrender.com/api-docs`);
     console.log(`📄 Swagger JSON: https://cse341team02.onrender.com/swagger.json`);
     console.log(`🏠 Home route: https://cse341team02.onrender.com`);
     console.log(`🔒 Environment: ${process.env.NODE_ENV || "development"}`);
+    console.log(`🗄️ Database: Connected to ${db.databaseName}`);
   });
-}).catch(err => {
-  console.error("Failed to connect to MongoDB:", err);
-  process.exit(1);
 });
