@@ -2,7 +2,7 @@
   "swagger": "2.0",
   "info": {
     "title": "Final Project API - Contacts Management System",
-    "description": "A comprehensive REST API for managing contacts, users, events, and RSVPs with Google OAuth authentication, validation, and error handling. Features include full CRUD operations, data validation, and unit testing.",
+    "description": "A comprehensive REST API for managing contacts, users, events, and RSVPs with Google OAuth authentication, validation, and error handling. Features include full CRUD operations, data validation, and unit testing.\n\n**Authentication Note:** To authenticate, DO NOT use the 'Try it out' button below. Instead, open a new browser tab and visit:\nhttps://cse341team02.onrender.com/auth/google\n\nAfter logging in, copy the access_token from the response and use it in the Authorize button above.",
     "version": "1.0.0",
     "contact": {
       "name": "CSE341 Team 02",
@@ -17,9 +17,15 @@
   "basePath": "/",
   "schemes": ["https", "http"],
   "securityDefinitions": {
+    "bearerAuth": {
+      "type": "apiKey",
+      "name": "Authorization",
+      "in": "header",
+      "description": "Enter your Bearer token as: Bearer YOUR_ACCESS_TOKEN\n\nTo get a token: 1) Visit /auth/google in your browser, 2) Login with Google, 3) Copy the access_token from the response"
+    },
     "google-oauth": {
       "type": "oauth2",
-      "description": "Google OAuth 2.0 authentication for API access",
+      "description": "Google OAuth 2.0 authentication (Note: Use browser tab, not Swagger UI)",
       "flow": "accessCode",
       "authorizationUrl": "https://accounts.google.com/o/oauth2/v2/auth",
       "tokenUrl": "https://oauth2.googleapis.com/token",
@@ -32,7 +38,7 @@
   },
   "security": [
     {
-      "google-oauth": ["openid", "profile", "email"]
+      "bearerAuth": []
     }
   ],
   "paths": {
@@ -67,6 +73,10 @@
                   "type": "string",
                   "example": "/api-docs"
                 },
+                "swaggerJson": {
+                  "type": "string",
+                  "example": "/swagger.json"
+                },
                 "endpoints": {
                   "type": "object",
                   "properties": {
@@ -74,6 +84,14 @@
                     "users": {"type": "string", "example": "/users"},
                     "events": {"type": "string", "example": "/events"},
                     "rsvps": {"type": "string", "example": "/rsvps"}
+                  }
+                },
+                "auth": {
+                  "type": "object",
+                  "properties": {
+                    "google_login": {"type": "string", "example": "/auth/google"},
+                    "auth_status": {"type": "string", "example": "/auth/status"},
+                    "logout": {"type": "string", "example": "/auth/logout"}
                   }
                 },
                 "version": {"type": "string", "example": "1.0.0"}
@@ -85,12 +103,34 @@
     },
     "/auth/google": {
       "get": {
-        "summary": "Google OAuth login",
-        "description": "Authenticate using Google OAuth 2.0",
+        "summary": "Google OAuth login - OPEN IN BROWSER TAB",
+        "description": "⚠️ IMPORTANT: Do not use 'Try it out' in Swagger UI. This endpoint redirects to Google and Swagger UI cannot handle redirects.\n\n✅ CORRECT USAGE:\n1. Open a new browser tab\n2. Go to: https://cse341team02.onrender.com/auth/google\n3. Log in with your Google account\n4. Copy the access_token from the JSON response\n5. Click the 'Authorize' button above and paste: Bearer YOUR_TOKEN\n\nThis endpoint returns a JSON response with access_token, user info, and refresh_token.",
         "produces": ["application/json"],
         "responses": {
           "302": {
-            "description": "Redirect to Google login page"
+            "description": "Redirect to Google login page (when accessed directly in browser)"
+          },
+          "200": {
+            "description": "Authentication successful - Returns access_token and user info",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "success": {"type": "boolean", "example": true},
+                "access_token": {"type": "string", "example": "ya29.xxx"},
+                "refresh_token": {"type": "string", "example": "1//xxx"},
+                "expires_in": {"type": "integer", "example": 3599},
+                "user": {
+                  "type": "object",
+                  "properties": {
+                    "id": {"type": "string"},
+                    "email": {"type": "string"},
+                    "name": {"type": "string"},
+                    "avatar": {"type": "string"},
+                    "role": {"type": "string"}
+                  }
+                }
+              }
+            }
           },
           "500": {
             "description": "Authentication error"
@@ -100,28 +140,17 @@
     },
     "/auth/google/callback": {
       "get": {
-        "summary": "Google OAuth callback",
-        "description": "Callback endpoint for Google OAuth authentication",
+        "summary": "Google OAuth callback (internal)",
+        "description": "Internal callback endpoint for Google OAuth. This endpoint should not be called directly.",
         "produces": ["application/json"],
         "responses": {
           "200": {
-            "description": "Authentication successful",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "message": {"type": "string"},
-                "user": {
-                  "type": "object",
-                  "properties": {
-                    "id": {"type": "string"},
-                    "name": {"type": "string"},
-                    "email": {"type": "string"}
-                  }
-                }
-              }
-            }
+            "description": "Authentication successful"
           },
-          "401": {
+          "400": {
+            "description": "No authorization code provided"
+          },
+          "500": {
             "description": "Authentication failed"
           }
         }
@@ -130,7 +159,7 @@
     "/auth/status": {
       "get": {
         "summary": "Check authentication status",
-        "description": "Returns current user authentication status",
+        "description": "Returns current user authentication status from session",
         "produces": ["application/json"],
         "responses": {
           "200": {
@@ -147,7 +176,8 @@
                     "email": {"type": "string"},
                     "role": {"type": "string"}
                   }
-                }
+                },
+                "access_token": {"type": "string"}
               }
             }
           }
@@ -165,7 +195,7 @@
             "schema": {
               "type": "object",
               "properties": {
-                "message": {"type": "string"}
+                "message": {"type": "string", "example": "Logged out successfully"}
               }
             }
           },
@@ -175,10 +205,29 @@
         }
       }
     },
+    "/users/profile": {
+      "get": {
+        "summary": "Get current user profile",
+        "description": "Returns the profile of the authenticated user. Requires Bearer token.",
+        "produces": ["application/json"],
+        "security": [{"bearerAuth": []}],
+        "responses": {
+          "200": {
+            "description": "User profile retrieved successfully",
+            "schema": {
+              "$ref": "#/definitions/User"
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing token"
+          }
+        }
+      }
+    },
     "/contacts": {
       "get": {
         "summary": "Get all contacts",
-        "description": "Retrieves a list of all contacts with optional pagination",
+        "description": "Retrieves a list of all contacts with optional pagination. No authentication required.",
         "produces": ["application/json"],
         "parameters": [
           {
@@ -186,8 +235,8 @@
             "in": "query",
             "required": false,
             "type": "integer",
-            "description": "Limit number of contacts returned",
-            "minimum": 1,
+            "description": "Limit number of contacts returned (0 for unlimited)",
+            "minimum": 0,
             "maximum": 100,
             "default": 10
           },
@@ -211,9 +260,6 @@
               }
             }
           },
-          "401": {
-            "description": "Unauthorized - Authentication required"
-          },
           "500": {
             "description": "Internal server error"
           }
@@ -221,7 +267,7 @@
       },
       "post": {
         "summary": "Create a new contact",
-        "description": "Creates a new contact with validation. All required fields must be provided.",
+        "description": "Creates a new contact with validation. All required fields must be provided. No authentication required.",
         "consumes": ["application/json"],
         "produces": ["application/json"],
         "parameters": [
@@ -238,14 +284,15 @@
           "201": {
             "description": "Contact created successfully",
             "schema": {
-              "$ref": "#/definitions/Contact"
+              "type": "object",
+              "properties": {
+                "message": {"type": "string", "example": "Contact created successfully"},
+                "id": {"type": "string", "example": "507f1f77bcf86cd799439011"}
+              }
             }
           },
           "400": {
             "description": "Bad request - Invalid data format"
-          },
-          "401": {
-            "description": "Unauthorized - Authentication required"
           },
           "412": {
             "description": "Validation failed - Missing or invalid required fields"
@@ -259,7 +306,7 @@
     "/contacts/{id}": {
       "get": {
         "summary": "Get a single contact",
-        "description": "Retrieves a contact by their unique ID",
+        "description": "Retrieves a contact by their unique ID. No authentication required.",
         "produces": ["application/json"],
         "parameters": [
           {
@@ -278,10 +325,7 @@
             }
           },
           "400": {
-            "description": "Invalid ID format - ID must be a valid MongoDB ObjectId"
-          },
-          "401": {
-            "description": "Unauthorized - Authentication required"
+            "description": "Invalid ID format"
           },
           "404": {
             "description": "Contact not found"
@@ -290,7 +334,7 @@
       },
       "put": {
         "summary": "Update a contact",
-        "description": "Updates an existing contact by ID. All fields are optional for update.",
+        "description": "Updates an existing contact by ID. All fields are optional for update. No authentication required.",
         "consumes": ["application/json"],
         "produces": ["application/json"],
         "parameters": [
@@ -320,14 +364,8 @@
           "400": {
             "description": "Invalid ID format or invalid data"
           },
-          "401": {
-            "description": "Unauthorized - Authentication required"
-          },
           "404": {
             "description": "Contact not found"
-          },
-          "412": {
-            "description": "Validation failed - Invalid field values"
           },
           "500": {
             "description": "Internal server error"
@@ -336,7 +374,7 @@
       },
       "delete": {
         "summary": "Delete a contact",
-        "description": "Permanently deletes a contact by ID",
+        "description": "Permanently deletes a contact by ID. No authentication required.",
         "produces": ["application/json"],
         "parameters": [
           {
@@ -353,31 +391,25 @@
             "schema": {
               "type": "object",
               "properties": {
-                "message": {"type": "string", "example": "Contact deleted successfully"},
-                "deletedCount": {"type": "integer", "example": 1}
+                "message": {"type": "string", "example": "Contact deleted successfully"}
               }
             }
           },
           "400": {
             "description": "Invalid ID format"
           },
-          "401": {
-            "description": "Unauthorized - Authentication required"
-          },
           "404": {
             "description": "Contact not found"
-          },
-          "500": {
-            "description": "Internal server error"
           }
         }
       }
     },
     "/users": {
       "get": {
-        "summary": "Get all users",
-        "description": "Retrieves a list of all registered users",
+        "summary": "Get all users (Admin only)",
+        "description": "Retrieves a list of all registered users. Requires admin role and Bearer token.\n\nTo get admin access: Update your role in MongoDB Atlas from 'user' to 'admin'.",
         "produces": ["application/json"],
+        "security": [{"bearerAuth": []}],
         "responses": {
           "200": {
             "description": "List of users retrieved successfully",
@@ -389,37 +421,10 @@
             }
           },
           "401": {
-            "description": "Unauthorized - Authentication required"
+            "description": "Unauthorized - No token provided"
           },
-          "500": {
-            "description": "Internal server error"
-          }
-        }
-      },
-      "post": {
-        "summary": "Create a new user",
-        "description": "Registers a new user with OAuth authentication",
-        "consumes": ["application/json"],
-        "produces": ["application/json"],
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/UserInput"
-            }
-          }
-        ],
-        "responses": {
-          "201": {
-            "description": "User created successfully"
-          },
-          "400": {
-            "description": "Bad request"
-          },
-          "409": {
-            "description": "User already exists"
+          "403": {
+            "description": "Forbidden - Admin role required"
           },
           "500": {
             "description": "Internal server error"
@@ -427,410 +432,56 @@
         }
       }
     },
-    "/users/{id}": {
+    "/public-users": {
       "get": {
-        "summary": "Get a user by ID",
-        "description": "Retrieves a specific user by their ID",
+        "summary": "Get all users (Public - Development only)",
+        "description": "Temporary public endpoint to view users. No authentication required.",
         "produces": ["application/json"],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "type": "string",
-            "description": "User ID"
-          }
-        ],
         "responses": {
           "200": {
-            "description": "User retrieved successfully",
+            "description": "List of users retrieved successfully",
             "schema": {
-              "$ref": "#/definitions/User"
+              "type": "object",
+              "properties": {
+                "count": {"type": "integer"},
+                "users": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {"type": "string"},
+                      "name": {"type": "string"},
+                      "email": {"type": "string"},
+                      "role": {"type": "string"}
+                    }
+                  }
+                }
+              }
             }
-          },
-          "400": {
-            "description": "Invalid ID format"
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "404": {
-            "description": "User not found"
-          }
-        }
-      },
-      "put": {
-        "summary": "Update a user",
-        "description": "Updates user information",
-        "consumes": ["application/json"],
-        "produces": ["application/json"],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          },
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/UserUpdate"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "User updated successfully"
-          },
-          "400": {
-            "description": "Invalid ID or data"
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "404": {
-            "description": "User not found"
-          }
-        }
-      },
-      "delete": {
-        "summary": "Delete a user",
-        "description": "Deletes a user account",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "User deleted successfully"
-          },
-          "400": {
-            "description": "Invalid ID format"
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "404": {
-            "description": "User not found"
           }
         }
       }
     },
-    "/events": {
+    "/test-db": {
       "get": {
-        "summary": "Get all events",
-        "description": "Retrieves all events with filtering options",
+        "summary": "Test database connection",
+        "description": "Returns database connection status and collections",
         "produces": ["application/json"],
-        "parameters": [
-          {
-            "name": "status",
-            "in": "query",
-            "required": false,
-            "type": "string",
-            "enum": ["upcoming", "past", "ongoing"],
-            "description": "Filter events by status"
-          },
-          {
-            "name": "limit",
-            "in": "query",
-            "required": false,
-            "type": "integer",
-            "description": "Limit number of events returned"
-          }
-        ],
         "responses": {
           "200": {
-            "description": "Events retrieved successfully",
+            "description": "Database connected successfully",
             "schema": {
-              "type": "array",
-              "items": {
-                "$ref": "#/definitions/Event"
+              "type": "object",
+              "properties": {
+                "message": {"type": "string"},
+                "collections": {"type": "array", "items": {"type": "string"}},
+                "dbName": {"type": "string"},
+                "status": {"type": "string"}
               }
             }
           },
-          "401": {
-            "description": "Unauthorized"
-          },
           "500": {
-            "description": "Server error"
-          }
-        }
-      },
-      "post": {
-        "summary": "Create a new event",
-        "description": "Creates a new event with validation (minimum 7 fields)",
-        "consumes": ["application/json"],
-        "produces": ["application/json"],
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/EventInput"
-            }
-          }
-        ],
-        "responses": {
-          "201": {
-            "description": "Event created successfully",
-            "schema": {
-              "$ref": "#/definitions/Event"
-            }
-          },
-          "400": {
-            "description": "Invalid input"
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "412": {
-            "description": "Validation failed"
-          },
-          "500": {
-            "description": "Server error"
-          }
-        }
-      }
-    },
-    "/events/{id}": {
-      "get": {
-        "summary": "Get event by ID",
-        "description": "Retrieves a specific event",
-        "produces": ["application/json"],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Event retrieved successfully",
-            "schema": {
-              "$ref": "#/definitions/Event"
-            }
-          },
-          "400": {
-            "description": "Invalid ID"
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "404": {
-            "description": "Event not found"
-          }
-        }
-      },
-      "put": {
-        "summary": "Update an event",
-        "description": "Updates event information",
-        "consumes": ["application/json"],
-        "produces": ["application/json"],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          },
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/EventUpdate"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Event updated successfully"
-          },
-          "400": {
-            "description": "Invalid input"
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "404": {
-            "description": "Event not found"
-          },
-          "412": {
-            "description": "Validation failed"
-          }
-        }
-      },
-      "delete": {
-        "summary": "Delete an event",
-        "description": "Deletes an event",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Event deleted successfully"
-          },
-          "400": {
-            "description": "Invalid ID"
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "404": {
-            "description": "Event not found"
-          }
-        }
-      }
-    },
-    "/rsvps": {
-      "get": {
-        "summary": "Get all RSVPs",
-        "description": "Retrieves all RSVP responses",
-        "produces": ["application/json"],
-        "parameters": [
-          {
-            "name": "eventId",
-            "in": "query",
-            "required": false,
-            "type": "string",
-            "description": "Filter RSVPs by event ID"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "RSVPs retrieved successfully",
-            "schema": {
-              "type": "array",
-              "items": {
-                "$ref": "#/definitions/RSVP"
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "500": {
-            "description": "Server error"
-          }
-        }
-      },
-      "post": {
-        "summary": "Create RSVP",
-        "description": "Creates an RSVP for an event",
-        "consumes": ["application/json"],
-        "produces": ["application/json"],
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/RSVPInput"
-            }
-          }
-        ],
-        "responses": {
-          "201": {
-            "description": "RSVP created successfully"
-          },
-          "400": {
-            "description": "Invalid input"
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "409": {
-            "description": "RSVP already exists"
-          }
-        }
-      }
-    },
-    "/rsvps/{id}": {
-      "get": {
-        "summary": "Get RSVP by ID",
-        "description": "Retrieves a specific RSVP",
-        "produces": ["application/json"],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "RSVP retrieved successfully",
-            "schema": {
-              "$ref": "#/definitions/RSVP"
-            }
-          },
-          "404": {
-            "description": "RSVP not found"
-          }
-        }
-      },
-      "put": {
-        "summary": "Update RSVP",
-        "description": "Updates an existing RSVP",
-        "consumes": ["application/json"],
-        "produces": ["application/json"],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          },
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/RSVPUpdate"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "RSVP updated successfully"
-          },
-          "404": {
-            "description": "RSVP not found"
-          }
-        }
-      },
-      "delete": {
-        "summary": "Delete RSVP",
-        "description": "Cancels an RSVP",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "RSVP cancelled successfully"
-          },
-          "404": {
-            "description": "RSVP not found"
+            "description": "Database connection error"
           }
         }
       }
@@ -848,15 +499,11 @@
               "properties": {
                 "message": {"type": "string"},
                 "note": {"type": "string"},
-                "oauth_providers": {
-                  "type": "array",
-                  "items": {"type": "string"},
-                  "example": ["Google"]
-                },
-                "auth_endpoints": {
+                "oauth_endpoints": {
                   "type": "object",
                   "properties": {
-                    "google": {"type": "string", "example": "/auth/google"}
+                    "google": {"type": "string", "example": "/auth/google"},
+                    "status": {"type": "string", "example": "/auth/status"}
                   }
                 }
               }
@@ -870,14 +517,14 @@
     "Contact": {
       "type": "object",
       "properties": {
-        "_id": {"type": "string", "example": "507f1f77bcf86cd799439011"},
-        "firstName": {"type": "string", "example": "John"},
-        "lastName": {"type": "string", "example": "Doe"},
-        "email": {"type": "string", "example": "john@example.com"},
-        "favoriteColor": {"type": "string", "example": "blue"},
-        "birthday": {"type": "string", "format": "date", "example": "1990-01-01"},
-        "phoneNumber": {"type": "string", "example": "+1234567890"},
-        "address": {"type": "string", "example": "123 Main St"},
+        "_id": {"type": "string"},
+        "firstName": {"type": "string"},
+        "lastName": {"type": "string"},
+        "email": {"type": "string"},
+        "favoriteColor": {"type": "string"},
+        "birthday": {"type": "string", "format": "date"},
+        "phoneNumber": {"type": "string"},
+        "address": {"type": "string"},
         "createdAt": {"type": "string", "format": "date-time"},
         "updatedAt": {"type": "string", "format": "date-time"}
       }
@@ -886,49 +533,20 @@
       "type": "object",
       "required": ["firstName", "lastName", "email", "favoriteColor"],
       "properties": {
-        "firstName": {
-          "type": "string",
-          "minLength": 1,
-          "maxLength": 50,
-          "example": "John"
-        },
-        "lastName": {
-          "type": "string",
-          "minLength": 1,
-          "maxLength": 50,
-          "example": "Doe"
-        },
-        "email": {
-          "type": "string",
-          "format": "email",
-          "example": "john@example.com"
-        },
-        "favoriteColor": {
-          "type": "string",
-          "example": "blue"
-        },
-        "birthday": {
-          "type": "string",
-          "format": "date",
-          "example": "1990-01-01"
-        },
-        "phoneNumber": {
-          "type": "string",
-          "pattern": "^\\+?[1-9]\\d{1,14}$",
-          "example": "+1234567890"
-        },
-        "address": {
-          "type": "string",
-          "maxLength": 200,
-          "example": "123 Main St"
-        }
+        "firstName": {"type": "string", "minLength": 1, "maxLength": 50},
+        "lastName": {"type": "string", "minLength": 1, "maxLength": 50},
+        "email": {"type": "string", "format": "email"},
+        "favoriteColor": {"type": "string"},
+        "birthday": {"type": "string", "format": "date"},
+        "phoneNumber": {"type": "string"},
+        "address": {"type": "string", "maxLength": 200}
       }
     },
     "ContactUpdate": {
       "type": "object",
       "properties": {
-        "firstName": {"type": "string", "minLength": 1, "maxLength": 50},
-        "lastName": {"type": "string", "minLength": 1, "maxLength": 50},
+        "firstName": {"type": "string"},
+        "lastName": {"type": "string"},
         "email": {"type": "string", "format": "email"},
         "favoriteColor": {"type": "string"},
         "birthday": {"type": "string", "format": "date"},
@@ -940,124 +558,23 @@
       "type": "object",
       "properties": {
         "_id": {"type": "string"},
-        "oauthId": {"type": "string"},
-        "provider": {"type": "string", "enum": ["google"]},
         "email": {"type": "string"},
         "name": {"type": "string"},
         "avatar": {"type": "string"},
-        "role": {"type": "string", "enum": ["user", "admin"], "default": "user"},
+        "role": {"type": "string", "enum": ["user", "admin"]},
         "createdAt": {"type": "string", "format": "date-time"},
         "lastLogin": {"type": "string", "format": "date-time"}
-      }
-    },
-    "UserInput": {
-      "type": "object",
-      "required": ["email", "name"],
-      "properties": {
-        "email": {"type": "string", "format": "email"},
-        "name": {"type": "string", "minLength": 2, "maxLength": 100},
-        "avatar": {"type": "string", "format": "uri"}
-      }
-    },
-    "UserUpdate": {
-      "type": "object",
-      "properties": {
-        "name": {"type": "string", "minLength": 2, "maxLength": 100},
-        "avatar": {"type": "string", "format": "uri"},
-        "role": {"type": "string", "enum": ["user", "admin"]}
-      }
-    },
-    "Event": {
-      "type": "object",
-      "properties": {
-        "_id": {"type": "string"},
-        "title": {"type": "string"},
-        "description": {"type": "string"},
-        "date": {"type": "string", "format": "date-time"},
-        "location": {"type": "string"},
-        "capacity": {"type": "integer"},
-        "organizer": {"type": "string"},
-        "category": {"type": "string"},
-        "status": {"type": "string", "enum": ["upcoming", "ongoing", "past", "cancelled"]},
-        "tags": {"type": "array", "items": {"type": "string"}},
-        "createdAt": {"type": "string", "format": "date-time"}
-      }
-    },
-    "EventInput": {
-      "type": "object",
-      "required": ["title", "description", "date", "location", "capacity", "organizer", "category"],
-      "properties": {
-        "title": {"type": "string", "minLength": 3, "maxLength": 100},
-        "description": {"type": "string", "minLength": 10, "maxLength": 1000},
-        "date": {"type": "string", "format": "date-time"},
-        "location": {"type": "string", "minLength": 3, "maxLength": 200},
-        "capacity": {"type": "integer", "minimum": 1, "maximum": 10000},
-        "organizer": {"type": "string"},
-        "category": {"type": "string"},
-        "tags": {"type": "array", "items": {"type": "string"}}
-      }
-    },
-    "EventUpdate": {
-      "type": "object",
-      "properties": {
-        "title": {"type": "string", "minLength": 3, "maxLength": 100},
-        "description": {"type": "string", "minLength": 10, "maxLength": 1000},
-        "date": {"type": "string", "format": "date-time"},
-        "location": {"type": "string"},
-        "capacity": {"type": "integer", "minimum": 1},
-        "status": {"type": "string", "enum": ["upcoming", "ongoing", "past", "cancelled"]},
-        "tags": {"type": "array", "items": {"type": "string"}}
-      }
-    },
-    "RSVP": {
-      "type": "object",
-      "properties": {
-        "_id": {"type": "string"},
-        "eventId": {"type": "string"},
-        "userId": {"type": "string"},
-        "status": {"type": "string", "enum": ["attending", "not_attending", "maybe"]},
-        "guests": {"type": "integer", "minimum": 0},
-        "dietaryRestrictions": {"type": "string"},
-        "rsvpDate": {"type": "string", "format": "date-time"},
-        "updatedAt": {"type": "string", "format": "date-time"}
-      }
-    },
-    "RSVPInput": {
-      "type": "object",
-      "required": ["eventId", "userId", "status"],
-      "properties": {
-        "eventId": {"type": "string"},
-        "userId": {"type": "string"},
-        "status": {"type": "string", "enum": ["attending", "not_attending", "maybe"]},
-        "guests": {"type": "integer", "minimum": 0, "maximum": 10, "default": 0},
-        "dietaryRestrictions": {"type": "string", "maxLength": 500}
-      }
-    },
-    "RSVPUpdate": {
-      "type": "object",
-      "properties": {
-        "status": {"type": "string", "enum": ["attending", "not_attending", "maybe"]},
-        "guests": {"type": "integer", "minimum": 0, "maximum": 10},
-        "dietaryRestrictions": {"type": "string"}
       }
     }
   },
   "tags": [
     {
       "name": "Contacts",
-      "description": "Contact management operations"
+      "description": "Contact management operations (Public - No auth required)"
     },
     {
       "name": "Users",
-      "description": "User management and authentication"
-    },
-    {
-      "name": "Events",
-      "description": "Event management operations (7+ fields)"
-    },
-    {
-      "name": "RSVPs",
-      "description": "RSVP management for events"
+      "description": "User management (Requires authentication & admin role)"
     },
     {
       "name": "Authentication",
