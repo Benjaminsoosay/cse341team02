@@ -15,13 +15,13 @@
   },
   "host": "cse341team02.onrender.com",
   "basePath": "/",
-  "schemes": ["https"],
+  "schemes": ["https", "http"],
   "securityDefinitions": {
     "google-oauth": {
       "type": "oauth2",
       "description": "Google OAuth 2.0 authentication for API access",
       "flow": "accessCode",
-      "authorizationUrl": "https://accounts.google.com/o/oauth2/auth",
+      "authorizationUrl": "https://accounts.google.com/o/oauth2/v2/auth",
       "tokenUrl": "https://oauth2.googleapis.com/token",
       "scopes": {
         "profile": "View your profile information",
@@ -32,7 +32,7 @@
   },
   "security": [
     {
-      "google-oauth": ["profile", "email", "openid"]
+      "google-oauth": ["openid", "profile", "email"]
     }
   ],
   "paths": {
