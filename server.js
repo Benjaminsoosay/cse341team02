@@ -6,7 +6,7 @@ const rateLimit = require("express-rate-limit");
 const dotenv = require("dotenv");
 const swaggerUi = require("swagger-ui-express");
 const swaggerDocument = require("./swagger.json");
-const { initDb, getDb } = require("./db/connect");  // Change this line
+const { initDb, getDb } = require("./db/connect");
 
 dotenv.config();
 
@@ -129,6 +129,125 @@ app.use(
   })
 );
 
+// ===== GOOGLE OAUTH ENDPOINTS =====
+app.get('/auth/google', (req, res) => {
+  const redirectUri = process.env.GOOGLE_REDIRECT_URI || 'https://cse341team02.onrender.com/auth/google/callback';
+  const authUrl = 'https://accounts.google.com/o/oauth2/v2/auth?' + new URLSearchParams({
+    client_id: process.env.GOOGLE_CLIENT_ID,
+    redirect_uri: redirectUri,
+    response_type: 'code',
+    scope: 'openid profile email',
+    access_type: 'offline',
+    prompt: 'consent'
+  });
+  res.redirect(authUrl);
+});
+
+app.get('/auth/google/callback', async (req, res) => {
+  const { code } = req.query;
+  
+  if (!code) {
+    return res.status(400).json({ error: 'No authorization code provided' });
+  }
+  
+  try {
+    // Exchange code for tokens
+    const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        code: code,
+        client_id: process.env.GOOGLE_CLIENT_ID,
+        client_secret: process.env.GOOGLE_CLIENT_SECRET,
+        redirect_uri: process.env.GOOGLE_REDIRECT_URI || 'https://cse341team02.onrender.com/auth/google/callback',
+        grant_type: 'authorization_code'
+      })
+    });
+    
+    if (!tokenResponse.ok) {
+      const errorData = await tokenResponse.json();
+      throw new Error(errorData.error_description || 'Failed to exchange code for tokens');
+    }
+    
+    const tokens = await tokenResponse.json();
+    
+    // Call your internal /users/google-auth endpoint
+    const userResponse = await fetch(`https://cse341team02.onrender.com/users/google-auth`, {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify({ token: tokens.id_token })
+    });
+    
+    if (!userResponse.ok) {
+      throw new Error('Failed to authenticate user with our API');
+    }
+    
+    const userData = await userResponse.json();
+    
+    // Store token in session
+    req.session.accessToken = tokens.access_token;
+    req.session.user = userData.user || userData;
+    
+    // Send success response with token
+    res.json({
+      success: true,
+      access_token: tokens.access_token,
+      refresh_token: tokens.refresh_token,
+      expires_in: tokens.expires_in,
+      user: userData.user || userData,
+      message: 'Authentication successful'
+    });
+  } catch (error) {
+    console.error('OAuth callback error:', error);
+    res.status(500).json({ 
+      error: 'Authentication failed',
+      message: error.message 
+    });
+  }
+});
+
+// Get current authenticated user
+app.get('/auth/status', (req, res) => {
+  if (req.session.user) {
+    res.json({ 
+      authenticated: true, 
+      user: req.session.user,
+      access_token: req.session.accessToken 
+    });
+  } else {
+    res.json({ authenticated: false, user: null });
+  }
+});
+
+// Logout endpoint
+app.get('/auth/logout', (req, res) => {
+  req.session.destroy((err) => {
+    if (err) {
+      return res.status(500).json({ error: 'Failed to logout', message: err.message });
+    }
+    res.json({ message: 'Logged out successfully' });
+  });
+});
+
+// Simple test token endpoint (for development)
+app.post('/auth/test-token', (req, res) => {
+  // This is a development endpoint - remove in production
+  res.json({
+    access_token: 'test-token-for-development',
+    token_type: 'Bearer',
+    expires_in: 3600,
+    user: {
+      id: 'test-user-id',
+      email: 'test@example.com',
+      name: 'Test User',
+      role: 'admin'
+    }
+  });
+});
+
 // Routes
 const contactsRoutes = require("./routes");
 const usersRoutes = require("./routes/users");
@@ -139,24 +258,6 @@ app.use("/contacts", contactsRoutes);
 app.use("/users", usersRoutes);
 app.use("/events", eventsRoutes);
 app.use("/rsvps", rsvpsRoutes);
-
-// Auth routes
-app.get("/auth/google", (req, res) => {
-  res.json({ message: "Google OAuth login endpoint", redirect: "/auth/google/callback" });
-});
-
-app.get("/auth/google/callback", (req, res) => {
-  res.json({ message: "Google OAuth callback endpoint" });
-});
-
-app.get("/auth/status", (req, res) => {
-  res.json({ authenticated: false, user: null });
-});
-
-app.get("/auth/logout", (req, res) => {
-  req.session.destroy();
-  res.json({ message: "Logged out successfully" });
-});
 
 // Home route
 app.get("/", (req, res) => {
@@ -170,6 +271,11 @@ app.get("/", (req, res) => {
       events: "/events",
       rsvps: "/rsvps",
     },
+    auth: {
+      google_login: "/auth/google",
+      auth_status: "/auth/status",
+      logout: "/auth/logout"
+    },
     version: "1.0.0",
   });
 });
@@ -179,7 +285,8 @@ app.get("/login", (req, res) => {
     message: "Login page",
     note: "Please use OAuth authentication via Google",
     oauth_endpoints: {
-      google: "/auth/google"
+      google: "/auth/google",
+      status: "/auth/status"
     }
   });
 });
@@ -220,7 +327,7 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Initialize database and start server - FIXED THIS SECTION
+// Initialize database and start server
 initDb((err, db) => {
   if (err) {
     console.error('Failed to connect to MongoDB:', err);
@@ -236,5 +343,6 @@ initDb((err, db) => {
     console.log(`🏠 Home route: https://cse341team02.onrender.com`);
     console.log(`🔒 Environment: ${process.env.NODE_ENV || "development"}`);
     console.log(`🗄️ Database: Connected to ${db.databaseName}`);
+    console.log(`🔐 Google OAuth: https://cse341team02.onrender.com/auth/google`);
   });
 });
