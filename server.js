@@ -1,4 +1,4 @@
-﻿const express = require("express");
+const express = require("express");
 const session = require("express-session");
 const cors = require("cors");
 const helmet = require("helmet");
@@ -13,9 +13,9 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 8080;
 
-// IMPORTANT: Enable CORS for all routes
+// IMPORTANT: Enable CORS for all routes with proper configuration
 app.use(cors({
-  origin: '*', // Allow all origins for testing
+  origin: ['https://cse341team02.onrender.com', 'http://localhost:8080', 'https://accounts.google.com'],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Origin', 'X-Requested-With'],
   credentials: true
@@ -27,7 +27,8 @@ app.options('*', cors());
 // Security Middleware (but don't block CORS)
 app.use(helmet({
   crossOriginResourcePolicy: { policy: "cross-origin" },
-  crossOriginOpenerPolicy: { policy: "unsafe-none" }
+  crossOriginOpenerPolicy: { policy: "unsafe-none" },
+  contentSecurityPolicy: false // Allows Swagger UI to work properly
 }));
 
 // Body parsing middleware
@@ -51,25 +52,60 @@ app.get('/api/swagger.json', (req, res) => {
   res.json(swaggerDocument);
 });
 
-// ===== Swagger UI Setup - Point to the swagger.json endpoint =====
+// ===== CRITICAL: Serve oauth2-redirect.html for Swagger OAuth =====
+app.get('/api-docs/oauth2-redirect.html', (req, res) => {
+  const redirectHtml = `<!DOCTYPE html>
+<html>
+<head>
+  <title>Swagger UI OAuth2 Redirect</title>
+</head>
+<body>
+  <script>
+    try {
+      var authResult = window.location.hash.substring(1).split('&').reduce(function(res, item) {
+        var parts = item.split('=');
+        res[parts[0]] = parts[1];
+        return res;
+      }, {});
+      
+      window.opener.postMessage({
+        type: 'oauth2',
+        response: authResult
+      }, '*');
+      window.close();
+    } catch(e) {
+      console.error('OAuth redirect error:', e);
+    }
+  </script>
+</body>
+</html>`;
+  res.send(redirectHtml);
+});
+
+// ===== Swagger UI Setup with OAuth Configuration =====
 const swaggerOptions = {
   swaggerOptions: {
-    url: '/swagger.json',  // This tells Swagger UI where to find your API spec
-    urls: [
-      {
-        url: '/swagger.json',
-        name: 'API v1'
-      }
-    ],
+    url: '/swagger.json',
+    oauth2RedirectUrl: 'https://cse341team02.onrender.com/api-docs/oauth2-redirect.html',
+    oauth: {
+      clientId: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      appName: 'CSE341 Team 02',
+      scopeSeparator: ' ',
+      usePkceWithAuthorizationCodeGrant: false
+    },
     docExpansion: 'list',
     defaultModelsExpandDepth: 3,
     tryItOutEnabled: true,
     filter: true,
     displayRequestDuration: true,
+    requestInterceptor: (request) => {
+      request.credentials = 'same-origin';
+      return request;
+    }
   },
   customCss: '.swagger-ui .topbar { display: none }',
   customSiteTitle: "CSE341 Team 02 - Final Project API Documentation",
-  customfavIcon: "",
 };
 
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument, swaggerOptions));
@@ -81,92 +117,4 @@ app.get('/api-docs.json', (req, res) => {
 
 // Rate limiting
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 100,
-  message: "Too many requests from this IP, please try again later."
-});
-app.use("/api", limiter);
-
-// Session configuration
-app.use(
-  session({
-    secret: process.env.SESSION_SECRET || "default-secret-key-change-this",
-    resave: false,
-    saveUninitialized: false,
-    cookie: {
-      secure: process.env.NODE_ENV === "production",
-      httpOnly: true,
-      maxAge: 24 * 60 * 60 * 1000,
-    },
-  })
-);
-
-// Your routes
-const contactsRoutes = require("./routes");
-const usersRoutes = require("./routes/users");
-const eventsRoutes = require("./routes/events");
-const rsvpsRoutes = require("./routes/rsvps");
-
-app.use("/contacts", contactsRoutes);
-app.use("/users", usersRoutes);
-app.use("/events", eventsRoutes);
-app.use("/rsvps", rsvpsRoutes);
-
-// Home route
-app.get("/", (req, res) => {
-  res.json({
-    message: "Final Project API - Welcome to the Contacts Management System",
-    documentation: "/api-docs",
-    swaggerJson: "/swagger.json",
-    endpoints: {
-      contacts: "/contacts",
-      users: "/users",
-      events: "/events",
-      rsvps: "/rsvps",
-    },
-    version: "1.0.0",
-  });
-});
-
-// Login route
-app.get("/login", (req, res) => {
-  res.json({ 
-    message: "Login page",
-    note: "Please use OAuth authentication via GitHub/Google",
-    oauth_endpoints: {
-      github: "/auth/github",
-      google: "/auth/google"
-    }
-  });
-});
-
-// 404 handler
-app.use((req, res) => {
-  res.status(404).json({ 
-    error: "Route not found",
-    message: `Cannot ${req.method} ${req.originalUrl}`
-  });
-});
-
-// Global error handler
-app.use((err, req, res, next) => {
-  console.error("Error stack:", err.stack);
-  res.status(err.status || 500).json({
-    error: "Something went wrong!",
-    message: process.env.NODE_ENV === "production" ? "Internal server error" : err.message,
-  });
-});
-
-// Connect to MongoDB and start server
-connectDB().then(() => {
-  app.listen(PORT, () => {
-    console.log(`🚀 Server running on port ${PORT}`);
-    console.log(`📚 API Documentation: https://cse341team02.onrender.com/api-docs`);
-    console.log(`📄 Swagger JSON: https://cse341team02.onrender.com/swagger.json`);
-    console.log(`🏠 Home route: https://cse341team02.onrender.com`);
-    console.log(`🔒 Environment: ${process.env.NODE_ENV || "development"}`);
-  });
-}).catch(err => {
-  console.error("Failed to connect to MongoDB:", err);
-  process.exit(1);
-});
+  windowMs: 15 * 60 * 
