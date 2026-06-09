@@ -2,7 +2,7 @@
   "swagger": "2.0",
   "info": {
     "title": "Final Project API - Contacts Management System",
-    "description": "A comprehensive REST API for managing contacts, users, events, and RSVPs with Google OAuth authentication, validation, and error handling. Features include full CRUD operations, data validation, and unit testing.",
+    "description": "A comprehensive REST API for managing contacts, users, events, and RSVPs with validation and error handling. Features include full CRUD operations, data validation, and unit testing.",
     "version": "1.0.0",
     "contact": {
       "name": "CSE341 Team 02",
@@ -16,25 +16,6 @@
   "host": "cse341team02.onrender.com",
   "basePath": "/",
   "schemes": ["https"],
-  "securityDefinitions": {
-    "google-oauth": {
-      "type": "oauth2",
-      "description": "Google OAuth 2.0 authentication for API access",
-      "flow": "accessCode",
-      "authorizationUrl": "https://accounts.google.com/o/oauth2/auth",
-      "tokenUrl": "https://oauth2.googleapis.com/token",
-      "scopes": {
-        "profile": "View your profile information",
-        "email": "View your email address",
-        "openid": "Authenticate with Google"
-      }
-    }
-  },
-  "security": [
-    {
-      "google-oauth": ["profile", "email", "openid"]
-    }
-  ],
   "paths": {
     "/api-docs": {
       "get": {
@@ -83,98 +64,6 @@
         }
       }
     },
-    "/auth/google": {
-      "get": {
-        "summary": "Google OAuth login",
-        "description": "Authenticate using Google OAuth 2.0",
-        "produces": ["application/json"],
-        "responses": {
-          "302": {
-            "description": "Redirect to Google login page"
-          },
-          "500": {
-            "description": "Authentication error"
-          }
-        }
-      }
-    },
-    "/auth/google/callback": {
-      "get": {
-        "summary": "Google OAuth callback",
-        "description": "Callback endpoint for Google OAuth authentication",
-        "produces": ["application/json"],
-        "responses": {
-          "200": {
-            "description": "Authentication successful",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "message": {"type": "string"},
-                "user": {
-                  "type": "object",
-                  "properties": {
-                    "id": {"type": "string"},
-                    "name": {"type": "string"},
-                    "email": {"type": "string"}
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Authentication failed"
-          }
-        }
-      }
-    },
-    "/auth/status": {
-      "get": {
-        "summary": "Check authentication status",
-        "description": "Returns current user authentication status",
-        "produces": ["application/json"],
-        "responses": {
-          "200": {
-            "description": "Authentication status",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "authenticated": {"type": "boolean"},
-                "user": {
-                  "type": "object",
-                  "properties": {
-                    "id": {"type": "string"},
-                    "name": {"type": "string"},
-                    "email": {"type": "string"},
-                    "role": {"type": "string"}
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/auth/logout": {
-      "get": {
-        "summary": "Logout user",
-        "description": "Ends the current user session",
-        "produces": ["application/json"],
-        "responses": {
-          "200": {
-            "description": "Successfully logged out",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "message": {"type": "string"}
-              }
-            }
-          },
-          "500": {
-            "description": "Error logging out"
-          }
-        }
-      }
-    },
     "/contacts": {
       "get": {
         "summary": "Get all contacts",
@@ -211,9 +100,6 @@
               }
             }
           },
-          "401": {
-            "description": "Unauthorized - Authentication required"
-          },
           "500": {
             "description": "Internal server error"
           }
@@ -243,9 +129,6 @@
           },
           "400": {
             "description": "Bad request - Invalid data format"
-          },
-          "401": {
-            "description": "Unauthorized - Authentication required"
           },
           "412": {
             "description": "Validation failed - Missing or invalid required fields"
@@ -279,9 +162,6 @@
           },
           "400": {
             "description": "Invalid ID format - ID must be a valid MongoDB ObjectId"
-          },
-          "401": {
-            "description": "Unauthorized - Authentication required"
           },
           "404": {
             "description": "Contact not found"
@@ -319,9 +199,6 @@
           },
           "400": {
             "description": "Invalid ID format or invalid data"
-          },
-          "401": {
-            "description": "Unauthorized - Authentication required"
           },
           "404": {
             "description": "Contact not found"
@@ -361,9 +238,6 @@
           "400": {
             "description": "Invalid ID format"
           },
-          "401": {
-            "description": "Unauthorized - Authentication required"
-          },
           "404": {
             "description": "Contact not found"
           },
@@ -388,9 +262,6 @@
               }
             }
           },
-          "401": {
-            "description": "Unauthorized - Authentication required"
-          },
           "500": {
             "description": "Internal server error"
           }
@@ -398,7 +269,7 @@
       },
       "post": {
         "summary": "Create a new user",
-        "description": "Registers a new user with OAuth authentication",
+        "description": "Registers a new user",
         "consumes": ["application/json"],
         "produces": ["application/json"],
         "parameters": [
@@ -451,9 +322,6 @@
           "400": {
             "description": "Invalid ID format"
           },
-          "401": {
-            "description": "Unauthorized"
-          },
           "404": {
             "description": "User not found"
           }
@@ -487,9 +355,6 @@
           "400": {
             "description": "Invalid ID or data"
           },
-          "401": {
-            "description": "Unauthorized"
-          },
           "404": {
             "description": "User not found"
           }
@@ -512,9 +377,6 @@
           },
           "400": {
             "description": "Invalid ID format"
-          },
-          "401": {
-            "description": "Unauthorized"
           },
           "404": {
             "description": "User not found"
@@ -554,9 +416,6 @@
               }
             }
           },
-          "401": {
-            "description": "Unauthorized"
-          },
           "500": {
             "description": "Server error"
           }
@@ -586,9 +445,6 @@
           },
           "400": {
             "description": "Invalid input"
-          },
-          "401": {
-            "description": "Unauthorized"
           },
           "412": {
             "description": "Validation failed"
@@ -621,9 +477,6 @@
           },
           "400": {
             "description": "Invalid ID"
-          },
-          "401": {
-            "description": "Unauthorized"
           },
           "404": {
             "description": "Event not found"
@@ -658,9 +511,6 @@
           "400": {
             "description": "Invalid input"
           },
-          "401": {
-            "description": "Unauthorized"
-          },
           "404": {
             "description": "Event not found"
           },
@@ -686,9 +536,6 @@
           },
           "400": {
             "description": "Invalid ID"
-          },
-          "401": {
-            "description": "Unauthorized"
           },
           "404": {
             "description": "Event not found"
@@ -720,9 +567,6 @@
               }
             }
           },
-          "401": {
-            "description": "Unauthorized"
-          },
           "500": {
             "description": "Server error"
           }
@@ -749,9 +593,6 @@
           },
           "400": {
             "description": "Invalid input"
-          },
-          "401": {
-            "description": "Unauthorized"
           },
           "409": {
             "description": "RSVP already exists"
@@ -834,36 +675,6 @@
           }
         }
       }
-    },
-    "/login": {
-      "get": {
-        "summary": "Login page info",
-        "description": "Provides information about OAuth authentication",
-        "produces": ["application/json"],
-        "responses": {
-          "200": {
-            "description": "Login information",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "message": {"type": "string"},
-                "note": {"type": "string"},
-                "oauth_providers": {
-                  "type": "array",
-                  "items": {"type": "string"},
-                  "example": ["Google"]
-                },
-                "auth_endpoints": {
-                  "type": "object",
-                  "properties": {
-                    "google": {"type": "string", "example": "/auth/google"}
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
     }
   },
   "definitions": {
@@ -886,42 +697,13 @@
       "type": "object",
       "required": ["firstName", "lastName", "email", "favoriteColor"],
       "properties": {
-        "firstName": {
-          "type": "string",
-          "minLength": 1,
-          "maxLength": 50,
-          "example": "John"
-        },
-        "lastName": {
-          "type": "string",
-          "minLength": 1,
-          "maxLength": 50,
-          "example": "Doe"
-        },
-        "email": {
-          "type": "string",
-          "format": "email",
-          "example": "john@example.com"
-        },
-        "favoriteColor": {
-          "type": "string",
-          "example": "blue"
-        },
-        "birthday": {
-          "type": "string",
-          "format": "date",
-          "example": "1990-01-01"
-        },
-        "phoneNumber": {
-          "type": "string",
-          "pattern": "^\\+?[1-9]\\d{1,14}$",
-          "example": "+1234567890"
-        },
-        "address": {
-          "type": "string",
-          "maxLength": 200,
-          "example": "123 Main St"
-        }
+        "firstName": {"type": "string", "minLength": 1, "maxLength": 50, "example": "John"},
+        "lastName": {"type": "string", "minLength": 1, "maxLength": 50, "example": "Doe"},
+        "email": {"type": "string", "format": "email", "example": "john@example.com"},
+        "favoriteColor": {"type": "string", "example": "blue"},
+        "birthday": {"type": "string", "format": "date", "example": "1990-01-01"},
+        "phoneNumber": {"type": "string", "pattern": "^\\+?[1-9]\\d{1,14}$", "example": "+1234567890"},
+        "address": {"type": "string", "maxLength": 200, "example": "123 Main St"}
       }
     },
     "ContactUpdate": {
@@ -1043,25 +825,9 @@
     }
   },
   "tags": [
-    {
-      "name": "Contacts",
-      "description": "Contact management operations"
-    },
-    {
-      "name": "Users",
-      "description": "User management and authentication"
-    },
-    {
-      "name": "Events",
-      "description": "Event management operations (7+ fields)"
-    },
-    {
-      "name": "RSVPs",
-      "description": "RSVP management for events"
-    },
-    {
-      "name": "Authentication",
-      "description": "Google OAuth authentication endpoints"
-    }
+    {"name": "Contacts", "description": "Contact management operations"},
+    {"name": "Users", "description": "User management"},
+    {"name": "Events", "description": "Event management operations (7+ fields)"},
+    {"name": "RSVPs", "description": "RSVP management for events"}
   ]
 }
