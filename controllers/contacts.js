@@ -1,33 +1,38 @@
 const mongodb = require("../db/connect");
 const { ObjectId } = require("mongodb");
 
-// GET ALL CONTACTS
-const getAll = (req, res) => {
+/* =========================
+   GET ALL CONTACTS
+========================= */
+const getAll = async (req, res) => {
   let limit = parseInt(req.query.limit);
 
   if (isNaN(limit) || limit <= 0) {
     limit = 0; // no limit
   }
 
-  mongodb
-    .getDb()
-    .collection("contacts")  // REMOVED extra .db()
-    .find()
-    .limit(limit)
-    .toArray()
-    .then((lists) => {
-      res.status(200).json(lists);
+  try {
+    const result = await mongodb
+                          .getDb()
+                          .collection("contacts")  // REMOVED extra .db()
+                          .find()
+                          .limit(limit)
+                          .toArray();
+                          
+    return res.status(200).json(result);
+
+  } catch (error) {
+    return res.status(500).json({
+      error: "Failed to retrieve contacts",
+      message: error.message
     })
-    .catch((err) => {
-      res.status(500).json({
-        error: "Failed to retrieve contacts",
-        message: err.message
-      });
-    });
+  }
 };
 
-// GET SINGLE CONTACT
-const getSingle = (req, res) => {
+/* =========================
+   GET SINGLE CONTACT
+========================= */
+const getSingle = async(req, res) => {
   const contactId = req.params.id;
 
   // VALIDATION (ID CHECK)
@@ -37,26 +42,27 @@ const getSingle = (req, res) => {
     });
   }
 
-  mongodb
-    .getDb()
-    .collection("contacts")  // REMOVED extra .db()
-    .findOne({ _id: new ObjectId(contactId) })
-    .then((result) => {
-      if (!result) {
-        return res.status(404).json({
-          error: "Contact not found"
-        });
-      }
+  try {
+    const result = await mongodb
+                  .getDb()
+                  .collection("contacts")  // REMOVED extra .db()
+                  .findOne({ _id: new ObjectId(contactId)});
 
-      res.status(200).json(result);
-    })
-    .catch((err) => {
-      res.status(500).json({
-        error: "Failed to retrieve contact",
-        message: err.message
+    if (!result) {
+      return res.status(404).json({
+          error: "Contact not found"
       });
+    }
+
+    return res.status(200).json(result);
+
+  } catch (error) {
+    return res.status(500).json({
+        error: "Failed to retrieve contact",
+        message: error.message
     });
-};
+  }
+}
 
 /* =========================
    CREATE CONTACT
@@ -77,24 +83,26 @@ const createContact = async (req, res) => {
       .insertOne(contact);
 
     if (response.acknowledged) {
-      res.status(201).json({
+      return res.status(201).json({
         message: "Contact created successfully",
         id: response.insertedId
       });
     } else {
-      res.status(500).json({
+      return res.status(500).json({
         error: "Failed to create contact"
       });
     }
   } catch (err) {
-    res.status(500).json({
+    return res.status(500).json({
       error: "Server error",
       message: err.message
     });
   }
 };
 
-// UPDATE CONTACT
+/* =========================
+   UPDATE CONTACT
+========================= */
 const updateContact = async (req, res) => {
   const contactId = req.params.id;
 
@@ -105,13 +113,14 @@ const updateContact = async (req, res) => {
     });
   }
 
-  const contact = {
-    firstName: req.body.firstName,
-    lastName: req.body.lastName,
-    email: req.body.email,
-    favoriteColor: req.body.favoriteColor,
-    birthday: req.body.birthday
-  };
+  const { firstName, lastName, email, favoriteColor, birthday } = req.body;
+
+  const contact = {}
+  if(firstName) contact.firstName = firstName
+  if(lastName) contact.lastName = lastName
+  if(email) contact.email = email
+  if(favoriteColor) contact.favoriteColor= favoriteColor
+  if(birthday) contact.birthday= birthday
 
   try {
     const response = await mongodb
@@ -129,24 +138,26 @@ const updateContact = async (req, res) => {
     }
 
     if (response.modifiedCount > 0) {
-      res.status(200).json({
+      return res.status(200).json({
         message: "Contact updated successfully"
       });
     } else {
-      res.status(200).json({
+      return res.status(200).json({
         message: "No changes detected"
       });
     }
   } catch (err) {
-    res.status(500).json({
+    return res.status(500).json({
       error: "Update failed",
       message: err.message
     });
   }
-};
+}
 
-// DELETE CONTACT
-const deleteContact = (req, res) => {
+/* =========================
+   DELETE CONTACT
+========================= */
+const deleteContact = async (req, res) => {
   const contactId = req.params.id;
 
   // VALIDATION
@@ -155,29 +166,29 @@ const deleteContact = (req, res) => {
       error: "Invalid contact ID format"
     });
   }
-
-  mongodb
-    .getDb()
-    .collection("contacts")  // REMOVED extra .db()
-    .deleteOne({ _id: new ObjectId(contactId) })
-    .then((response) => {
-      if (response.deletedCount > 0) {
-        res.status(200).json({
-          message: "Contact deleted successfully"
-        });
-      } else {
-        res.status(404).json({
-          error: "Contact not found"
-        });
-      }
-    })
-    .catch((err) => {
-      res.status(500).json({
-        error: "Delete failed",
-        message: err.message
+  
+  try {
+    const response = await mongodb
+                      .getDb()
+                      .collection("contacts")  // REMOVED extra .db()
+                      .deleteOne({ _id: new ObjectId(contactId) })
+                      
+    if (response.deletedCount > 0) {
+      return res.status(200).json({
+        message: "Contact deleted successfully"
       });
+    } else {
+      return res.status(404).json({
+          error: "Contact not found"
+      });
+    }
+  } catch (err) {
+    return res.status(500).json({
+      error: "Delete failed",
+      message: err.message
     });
-};
+  }
+}
 
 // EXPORTS
 module.exports = {

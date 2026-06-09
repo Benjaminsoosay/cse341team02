@@ -1,4 +1,4 @@
-const express = require("express");
+/* const express = require("express");
 const router = express.Router();
 const { ObjectId } = require("mongodb");
 const mongodb = require("../db/connect");
@@ -182,4 +182,4 @@ router.delete("/:id", verifyToken, validateObjectId, deleteContact);
 // Admin-only routes (example)
 // router.delete("/admin/:id", verifyToken, requireAdmin, validateObjectId, adminDeleteContact);
 
-module.exports = router;
+module.exports = router; */
