@@ -4,6 +4,7 @@ const { verifyToken, requireAdmin } = require("../middleware/auth");
 
 // Public routes (no authentication required)
 router.post("/google-auth", usersController.googleAuth);
+router.post("/", usersController.createUser);
 
 // Protected routes (require authentication)
 router.get("/profile", verifyToken, usersController.getMyProfile);
