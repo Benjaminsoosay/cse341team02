@@ -1,84 +1,121 @@
-const mongodb = require("../db/connect");
-const { ObjectId } = require("mongodb");
+const Event = require("../models/Event");
+const mongoose = require("mongoose");
 
-// GET all events
+// GET all events with filtering
 const getAllEvents = async (req, res) => {
   try {
     let limit = parseInt(req.query.limit);
     if (isNaN(limit) || limit <= 0) limit = 0;
     
-    let query = mongodb.getDb().db().collection("events").find();
+    let query = {};
     
-    // Filter by createdBy if provided
-    if (req.query.createdBy && ObjectId.isValid(req.query.createdBy)) {
-      query = query.filter({ createdBy: new ObjectId(req.query.createdBy) });
+    // Filter by status if provided
+    if (req.query.status) {
+      query.status = req.query.status;
     }
     
-    const result = await query.limit(limit).toArray();
-    res.status(200).json(result);
+    // Filter by category if provided
+    if (req.query.category) {
+      query.category = req.query.category;
+    }
+    
+    // Filter by createdBy if provided
+    if (req.query.createdBy && mongoose.Types.ObjectId.isValid(req.query.createdBy)) {
+      query.createdBy = req.query.createdBy;
+    }
+    
+    // Filter by date range
+    if (req.query.startDate) {
+      query.date = { ...query.date, $gte: new Date(req.query.startDate) };
+    }
+    if (req.query.endDate) {
+      query.date = { ...query.date, $lte: new Date(req.query.endDate) };
+    }
+    
+    let eventsQuery = Event.find(query).sort({ date: 1 });
+    
+    if (limit > 0) {
+      eventsQuery = eventsQuery.limit(limit);
+    }
+    
+    const events = await eventsQuery;
+    res.status(200).json(events);
   } catch (err) {
-    res.status(500).json({ error: "Failed to retrieve events", message: err.message });
+    res.status(500).json({ 
+      error: "Failed to retrieve events", 
+      message: err.message 
+    });
   }
 };
 
-// GET single event
+// GET single event by ID
 const getSingleEvent = async (req, res) => {
   const eventId = req.params.id;
   
-  if (!ObjectId.isValid(eventId)) {
+  if (!mongoose.Types.ObjectId.isValid(eventId)) {
     return res.status(400).json({ error: "Invalid event ID format" });
   }
   
   try {
-    const result = await mongodb
-      .getDb()
-      .db()
-      .collection("events")
-      .findOne({ _id: new ObjectId(eventId) });
+    const event = await Event.findById(eventId);
     
-    if (!result) {
+    if (!event) {
       return res.status(404).json({ error: "Event not found" });
     }
     
-    res.status(200).json(result);
+    res.status(200).json(event);
   } catch (err) {
-    res.status(500).json({ error: "Failed to retrieve event", message: err.message });
+    res.status(500).json({ 
+      error: "Failed to retrieve event", 
+      message: err.message 
+    });
   }
 };
 
 // CREATE event (protected)
 const createEvent = async (req, res) => {
   try {
-    const event = {
+    // Validate required fields
+    const requiredFields = ['title', 'description', 'date', 'location'];
+    for (const field of requiredFields) {
+      if (!req.body[field]) {
+        return res.status(400).json({ 
+          error: `Missing required field: ${field}` 
+        });
+      }
+    }
+    
+    const event = new Event({
       title: req.body.title,
       description: req.body.description,
       date: new Date(req.body.date),
       location: req.body.location,
-      createdBy: new ObjectId(req.user.userId), // from JWT
-      createdAt: new Date(),
-      maxAttendees: req.body.maxAttendees || null,
-      currentAttendees: 0,
-      status: "upcoming",
+      createdBy: req.user.userId, // from JWT
+      maxAttendees: req.body.maxAttendees,
+      category: req.body.category,
+      isVirtual: req.body.isVirtual || false,
+      price: req.body.price,
       tags: req.body.tags || []
-    };
+    });
     
-    const response = await mongodb
-      .getDb()
-      .db()
-      .collection("events")
-      .insertOne(event);
+    const savedEvent = await event.save();
     
-    if (response.acknowledged) {
-      res.status(201).json({
-        message: "Event created successfully",
-        id: response.insertedId,
-        event
-      });
-    } else {
-      res.status(500).json({ error: "Failed to create event" });
-    }
+    res.status(201).json({
+      message: "Event created successfully",
+      event: savedEvent
+    });
   } catch (err) {
-    res.status(500).json({ error: "Server error", message: err.message });
+    // Handle validation errors
+    if (err.name === 'ValidationError') {
+      return res.status(400).json({ 
+        error: "Validation failed", 
+        details: err.message 
+      });
+    }
+    res.status(500).json({ 
+      error: "Server error", 
+      message: err.message 
+    });
   }
 };
 
@@ -86,37 +123,57 @@ const createEvent = async (req, res) => {
 const updateEvent = async (req, res) => {
   const eventId = req.params.id;
   
-  if (!ObjectId.isValid(eventId)) {
+  if (!mongoose.Types.ObjectId.isValid(eventId)) {
     return res.status(400).json({ error: "Invalid event ID format" });
   }
   
-  const updateData = {};
-  if (req.body.title) updateData.title = req.body.title;
-  if (req.body.description) updateData.description = req.body.description;
-  if (req.body.date) updateData.date = new Date(req.body.date);
-  if (req.body.location) updateData.location = req.body.location;
-  if (req.body.maxAttendees) updateData.maxAttendees = req.body.maxAttendees;
-  if (req.body.status) updateData.status = req.body.status;
-  if (req.body.tags) updateData.tags = req.body.tags;
-  updateData.updatedAt = new Date();
-  
   try {
-    const response = await mongodb
-      .getDb()
-      .db()
-      .collection("events")
-      .updateOne(
-        { _id: new ObjectId(eventId) },
-        { $set: updateData }
-      );
-    
-    if (response.matchedCount === 0) {
+    // Check if event exists
+    const existingEvent = await Event.findById(eventId);
+    if (!existingEvent) {
       return res.status(404).json({ error: "Event not found" });
     }
     
-    res.status(200).json({ message: "Event updated successfully" });
+    // Check if user owns the event or is admin
+    if (existingEvent.createdBy.toString() !== req.user.userId && req.user.role !== 'admin') {
+      return res.status(403).json({ error: "Not authorized to update this event" });
+    }
+    
+    const updateData = {};
+    const allowedUpdates = ['title', 'description', 'date', 'location', 'maxAttendees', 'status', 'tags', 'category', 'isVirtual', 'price'];
+    
+    for (const field of allowedUpdates) {
+      if (req.body[field] !== undefined) {
+        if (field === 'date') {
+          updateData[field] = new Date(req.body[field]);
+        } else {
+          updateData[field] = req.body[field];
+        }
+      }
+    }
+    updateData.updatedAt = new Date();
+    
+    const updatedEvent = await Event.findByIdAndUpdate(
+      eventId,
+      { $set: updateData },
+      { new: true, runValidators: true }
+    );
+    
+    res.status(200).json({
+      message: "Event updated successfully",
+      event: updatedEvent
+    });
   } catch (err) {
-    res.status(500).json({ error: "Update failed", message: err.message });
+    if (err.name === 'ValidationError') {
+      return res.status(400).json({ 
+        error: "Validation failed", 
+        details: err.message 
+      });
+    }
+    res.status(500).json({ 
+      error: "Update failed", 
+      message: err.message 
+    });
   }
 };
 
@@ -124,24 +181,30 @@ const updateEvent = async (req, res) => {
 const deleteEvent = async (req, res) => {
   const eventId = req.params.id;
   
-  if (!ObjectId.isValid(eventId)) {
+  if (!mongoose.Types.ObjectId.isValid(eventId)) {
     return res.status(400).json({ error: "Invalid event ID format" });
   }
   
   try {
-    const response = await mongodb
-      .getDb()
-      .db()
-      .collection("events")
-      .deleteOne({ _id: new ObjectId(eventId) });
-    
-    if (response.deletedCount === 0) {
+    // Check if event exists
+    const event = await Event.findById(eventId);
+    if (!event) {
       return res.status(404).json({ error: "Event not found" });
     }
     
+    // Check if user owns the event or is admin
+    if (event.createdBy.toString() !== req.user.userId && req.user.role !== 'admin') {
+      return res.status(403).json({ error: "Not authorized to delete this event" });
+    }
+    
+    await Event.findByIdAndDelete(eventId);
+    
     res.status(200).json({ message: "Event deleted successfully" });
   } catch (err) {
-    res.status(500).json({ error: "Delete failed", message: err.message });
+    res.status(500).json({ 
+      error: "Delete failed", 
+      message: err.message 
+    });
   }
 };
 
