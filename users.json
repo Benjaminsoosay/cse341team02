@@ -1,222 +1,144 @@
-[
-  {
-    "_id": "6a21e475de488f8196456c7b",
-    "email": "iwuchukwuchinonso527@gmail.com",
-    "name": "Daniel Benjamin Soosay Iwuchukwu",
-    "avatar": "https://lh3.googleusercontent.com/a/ACg8ocI_gnh-eNfmzP5BRxagdH_XtdwGCo",
-    "googleId": "117669854366410543230",
-    "role": "user",
-    "createdAt": "2026-06-04T20:47:49.711+00:00",
-    "updatedAt": "2026-06-04T21:54:04.254+00:00",
-    "lastLogin": "2026-06-04T21:54:04.254+00:00"
-  },
-  {
-    "_id": "6a21e475de488f8196456c7c",
-    "email": "sarah.johnson@example.com",
-    "name": "Sarah Johnson",
-    "avatar": "https://lh3.googleusercontent.com/a/ACg8ocI_sarah123",
-    "googleId": "117669854366410543231",
-    "role": "user",
-    "createdAt": "2026-06-04T20:48:00.000+00:00",
-    "updatedAt": "2026-06-04T21:00:00.000+00:00",
-    "lastLogin": "2026-06-04T21:00:00.000+00:00"
-  },
-  {
-    "_id": "6a21e475de488f8196456c7d",
-    "email": "michael.chen@example.com",
-    "name": "Michael Chen",
-    "avatar": "https://lh3.googleusercontent.com/a/ACg8ocI_michael456",
-    "googleId": "117669854366410543232",
-    "role": "user",
-    "createdAt": "2026-06-04T20:48:10.000+00:00",
-    "updatedAt": "2026-06-04T21:10:00.000+00:00",
-    "lastLogin": "2026-06-04T21:10:00.000+00:00"
-  },
-  {
-    "_id": "6a21e475de488f8196456c7e",
-    "email": "emily.williams@example.com",
-    "name": "Emily Williams",
-    "avatar": "https://lh3.googleusercontent.com/a/ACg8ocI_emily789",
-    "googleId": "117669854366410543233",
-    "role": "user",
-    "createdAt": "2026-06-04T20:48:20.000+00:00",
-    "updatedAt": "2026-06-04T21:20:00.000+00:00",
-    "lastLogin": "2026-06-04T21:20:00.000+00:00"
-  },
-  {
-    "_id": "6a21e475de488f8196456c7f",
-    "email": "david.rodriguez@example.com",
-    "name": "David Rodriguez",
-    "avatar": "https://lh3.googleusercontent.com/a/ACg8ocI_david101",
-    "googleId": "117669854366410543234",
-    "role": "user",
-    "createdAt": "2026-06-04T20:48:30.000+00:00",
-    "updatedAt": "2026-06-04T21:30:00.000+00:00",
-    "lastLogin": "2026-06-04T21:30:00.000+00:00"
-  },
-  {
-    "_id": "6a21e475de488f8196456c80",
-    "email": "jessica.martinez@example.com",
-    "name": "Jessica Martinez",
-    "avatar": "https://lh3.googleusercontent.com/a/ACg8ocI_jessica202",
-    "googleId": "117669854366410543235",
-    "role": "user",
-    "createdAt": "2026-06-04T20:48:40.000+00:00",
-    "updatedAt": "2026-06-04T21:40:00.000+00:00",
-    "lastLogin": "2026-06-04T21:40:00.000+00:00"
-  },
-  {
-    "_id": "6a21e475de488f8196456c81",
-    "email": "christopher.kim@example.com",
-    "name": "Christopher Kim",
-    "avatar": "https://lh3.googleusercontent.com/a/ACg8ocI_chris303",
-    "googleId": "117669854366410543236",
-    "role": "user",
-    "createdAt": "2026-06-04T20:48:50.000+00:00",
-    "updatedAt": "2026-06-04T21:50:00.000+00:00",
-    "lastLogin": "2026-06-04T21:50:00.000+00:00"
-  },
-  {
-    "_id": "6a21e475de488f8196456c82",
-    "email": "amanda.thompson@example.com",
-    "name": "Amanda Thompson",
-    "avatar": "https://lh3.googleusercontent.com/a/ACg8ocI_amanda404",
-    "googleId": "117669854366410543237",
-    "role": "user",
-    "createdAt": "2026-06-04T20:49:00.000+00:00",
-    "updatedAt": "2026-06-04T22:00:00.000+00:00",
-    "lastLogin": "2026-06-04T22:00:00.000+00:00"
-  },
-  {
-    "_id": "6a21e475de488f8196456c83",
-    "email": "daniel.garcia@example.com",
-    "name": "Daniel Garcia",
-    "avatar": "https://lh3.googleusercontent.com/a/ACg8ocI_daniel505",
-    "googleId": "117669854366410543238",
-    "role": "user",
-    "createdAt": "2026-06-04T20:49:10.000+00:00",
-    "updatedAt": "2026-06-04T22:10:00.000+00:00",
-    "lastLogin": "2026-06-04T22:10:00.000+00:00"
-  },
-  {
-    "_id": "6a21e475de488f8196456c84",
-    "email": "stephanie.lewis@example.com",
-    "name": "Stephanie Lewis",
-    "avatar": "https://lh3.googleusercontent.com/a/ACg8ocI_stephanie606",
-    "googleId": "117669854366410543239",
-    "role": "user",
-    "createdAt": "2026-06-04T20:49:20.000+00:00",
-    "updatedAt": "2026-06-04T22:20:00.000+00:00",
-    "lastLogin": "2026-06-04T22:20:00.000+00:00"
-  },
-  {
-    "_id": "6a21e475de488f8196456c85",
-    "email": "kevin.walker@example.com",
-    "name": "Kevin Walker",
-    "avatar": "https://lh3.googleusercontent.com/a/ACg8ocI_kevin707",
-    "googleId": "117669854366410543240",
-    "role": "user",
-    "createdAt": "2026-06-04T20:49:30.000+00:00",
-    "updatedAt": "2026-06-04T22:30:00.000+00:00",
-    "lastLogin": "2026-06-04T22:30:00.000+00:00"
-  },
-  {
-    "_id": "6a21e475de488f8196456c86",
-    "email": "rachel.hall@example.com",
-    "name": "Rachel Hall",
-    "avatar": "https://lh3.googleusercontent.com/a/ACg8ocI_rachel808",
-    "googleId": "117669854366410543241",
-    "role": "user",
-    "createdAt": "2026-06-04T20:49:40.000+00:00",
-    "updatedAt": "2026-06-04T22:40:00.000+00:00",
-    "lastLogin": "2026-06-04T22:40:00.000+00:00"
-  },
-  {
-    "_id": "6a21e475de488f8196456c87",
-    "email": "brian.young@example.com",
-    "name": "Brian Young",
-    "avatar": "https://lh3.googleusercontent.com/a/ACg8ocI_brian909",
-    "googleId": "117669854366410543242",
-    "role": "user",
-    "createdAt": "2026-06-04T20:49:50.000+00:00",
-    "updatedAt": "2026-06-04T22:50:00.000+00:00",
-    "lastLogin": "2026-06-04T22:50:00.000+00:00"
-  },
-  {
-    "_id": "6a21e475de488f8196456c88",
-    "email": "michelle.king@example.com",
-    "name": "Michelle King",
-    "avatar": "https://lh3.googleusercontent.com/a/ACg8ocI_michelle010",
-    "googleId": "117669854366410543243",
-    "role": "user",
-    "createdAt": "2026-06-04T20:50:00.000+00:00",
-    "updatedAt": "2026-06-04T23:00:00.000+00:00",
-    "lastLogin": "2026-06-04T23:00:00.000+00:00"
-  },
-  {
-    "_id": "6a21e475de488f8196456c89",
-    "email": "jason.wright@example.com",
-    "name": "Jason Wright",
-    "avatar": "https://lh3.googleusercontent.com/a/ACg8ocI_jason111",
-    "googleId": "117669854366410543244",
-    "role": "user",
-    "createdAt": "2026-06-04T20:50:10.000+00:00",
-    "updatedAt": "2026-06-04T23:10:00.000+00:00",
-    "lastLogin": "2026-06-04T23:10:00.000+00:00"
-  },
-  {
-    "_id": "6a21e475de488f8196456c8a",
-    "email": "laura.scott@example.com",
-    "name": "Laura Scott",
-    "avatar": "https://lh3.googleusercontent.com/a/ACg8ocI_laura222",
-    "googleId": "117669854366410543245",
-    "role": "user",
-    "createdAt": "2026-06-04T20:50:20.000+00:00",
-    "updatedAt": "2026-06-04T23:20:00.000+00:00",
-    "lastLogin": "2026-06-04T23:20:00.000+00:00"
-  },
-  {
-    "_id": "6a21e475de488f8196456c8b",
-    "email": "matthew.adams@example.com",
-    "name": "Matthew Adams",
-    "avatar": "https://lh3.googleusercontent.com/a/ACg8ocI_matthew333",
-    "googleId": "117669854366410543246",
-    "role": "user",
-    "createdAt": "2026-06-04T20:50:30.000+00:00",
-    "updatedAt": "2026-06-04T23:30:00.000+00:00",
-    "lastLogin": "2026-06-04T23:30:00.000+00:00"
-  },
-  {
-    "_id": "6a21e475de488f8196456c8c",
-    "email": "nicole.nelson@example.com",
-    "name": "Nicole Nelson",
-    "avatar": "https://lh3.googleusercontent.com/a/ACg8ocI_nicole444",
-    "googleId": "117669854366410543247",
-    "role": "user",
-    "createdAt": "2026-06-04T20:50:40.000+00:00",
-    "updatedAt": "2026-06-04T23:40:00.000+00:00",
-    "lastLogin": "2026-06-04T23:40:00.000+00:00"
-  },
-  {
-    "_id": "6a21e475de488f8196456c8d",
-    "email": "andrew.carter@example.com",
-    "name": "Andrew Carter",
-    "avatar": "https://lh3.googleusercontent.com/a/ACg8ocI_andrew555",
-    "googleId": "117669854366410543248",
-    "role": "user",
-    "createdAt": "2026-06-04T20:50:50.000+00:00",
-    "updatedAt": "2026-06-04T23:50:00.000+00:00",
-    "lastLogin": "2026-06-04T23:50:00.000+00:00"
-  },
-  {
-    "_id": "6a21e475de488f8196456c8e",
-    "email": "olivia.mitchell@example.com",
-    "name": "Olivia Mitchell",
-    "avatar": "https://lh3.googleusercontent.com/a/ACg8ocI_olivia666",
-    "googleId": "117669854366410543249",
-    "role": "user",
-    "createdAt": "2026-06-04T20:51:00.000+00:00",
-    "updatedAt": "2026-06-05T00:00:00.000+00:00",
-    "lastLogin": "2026-06-05T00:00:00.000+00:00"
-  }
-]
+{
+  "users": [
+    {
+      "id": 1,
+      "name": "Benjamin C Soosay Iwuchukwu",
+      "email": "Iwuchukwuchinonso527@gmail.com",
+      "role": "admin",
+      "color": "Red"
+    },
+    {
+      "id": 2,
+      "name": "Alice Johnson",
+      "email": "alice.johnson@example.com",
+      "role": "editor",
+      "color": "Blue"
+    },
+    {
+      "id": 3,
+      "name": "Bob Smith",
+      "email": "bob.smith@example.com",
+      "role": "viewer",
+      "color": "Green"
+    },
+    {
+      "id": 4,
+      "name": "Carol Davis",
+      "email": "carol.davis@example.com",
+      "role": "editor",
+      "color": "Yellow"
+    },
+    {
+      "id": 5,
+      "name": "David Brown",
+      "email": "david.brown@example.com",
+      "role": "viewer",
+      "color": "Purple"
+    },
+    {
+      "id": 6,
+      "name": "Emma Wilson",
+      "email": "emma.wilson@example.com",
+      "role": "moderator",
+      "color": "Orange"
+    },
+    {
+      "id": 7,
+      "name": "Frank Miller",
+      "email": "frank.miller@example.com",
+      "role": "viewer",
+      "color": "Cyan"
+    },
+    {
+      "id": 8,
+      "name": "Grace Lee",
+      "email": "grace.lee@example.com",
+      "role": "editor",
+      "color": "Magenta"
+    },
+    {
+      "id": 9,
+      "name": "Henry Taylor",
+      "email": "henry.taylor@example.com",
+      "role": "viewer",
+      "color": "Lime"
+    },
+    {
+      "id": 10,
+      "name": "Ivy Martinez",
+      "email": "ivy.martinez@example.com",
+      "role": "moderator",
+      "color": "Pink"
+    },
+    {
+      "id": 11,
+      "name": "Jack Anderson",
+      "email": "jack.anderson@example.com",
+      "role": "viewer",
+      "color": "Teal"
+    },
+    {
+      "id": 12,
+      "name": "Kara Thomas",
+      "email": "kara.thomas@example.com",
+      "role": "editor",
+      "color": "Indigo"
+    },
+    {
+      "id": 13,
+      "name": "Liam Jackson",
+      "email": "liam.jackson@example.com",
+      "role": "viewer",
+      "color": "Coral"
+    },
+    {
+      "id": 14,
+      "name": "Mia White",
+      "email": "mia.white@example.com",
+      "role": "moderator",
+      "color": "Navy"
+    },
+    {
+      "id": 15,
+      "name": "Noah Harris",
+      "email": "noah.harris@example.com",
+      "role": "viewer",
+      "color": "Olive"
+    },
+    {
+      "id": 16,
+      "name": "Olivia Martin",
+      "email": "olivia.martin@example.com",
+      "role": "editor",
+      "color": "Maroon"
+    },
+    {
+      "id": 17,
+      "name": "Paul Thompson",
+      "email": "paul.thompson@example.com",
+      "role": "viewer",
+      "color": "Gold"
+    },
+    {
+      "id": 18,
+      "name": "Quinn Garcia",
+      "email": "quinn.garcia@example.com",
+      "role": "moderator",
+      "color": "Silver"
+    },
+    {
+      "id": 19,
+      "name": "Rachel Martinez",
+      "email": "rachel.martinez@example.com",
+      "role": "viewer",
+      "color": "Peach"
+    },
+    {
+      "id": 20,
+      "name": "Samuel Robinson",
+      "email": "samuel.robinson@example.com",
+      "role": "editor",
+      "color": "Lavender"
+    }
+  ]
+}
