@@ -347,27 +347,27 @@ const options = {
     tags: [
       {
         name: "Auth",
-        description: "Authentication endpoints"
+        description: "Authentication Endpoints"
       },
       {
         name: "Contacts",
-        description: "Contact management endpoints"
+        description: "Contact management Endpoints"
       },
       {
         name: "Users",
-        description: "User management endpoints"
+        description: "User Management Endpoints"
       },
       {
         name: "Events",
-        description: "Event management endpoints"
+        description: "Event Management Endpoints"
       },
       {
         name: "RSVPs",
-        description: "RSVP management endpoints"
+        description: "RSVP Management Endpoints"
       },
       {
         name: "Health",
-        description: "Health check endpoints"
+        description: "Health Check Endpoints"
       }
     ]
   },
