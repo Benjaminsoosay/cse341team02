@@ -11,17 +11,13 @@ const googleAuth = async (req, res) => {
       return res.status(400).json({ error: "idToken is required" });
     }
     
-    // Verify Google token
     const payload = await verifyGoogleToken(idToken);
-    
-    const db = mongodb.getDb(); 
+    const db = mongodb.getDb();
     const usersCollection = db.collection("users");
     
-    // Check if user exists
     let user = await usersCollection.findOne({ email: payload.email });
     
     if (!user) {
-      // Create new user (7+ fields)
       const newUser = {
         googleId: payload.sub,
         name: payload.name,
@@ -37,14 +33,12 @@ const googleAuth = async (req, res) => {
       const result = await usersCollection.insertOne(newUser);
       user = { ...newUser, _id: result.insertedId };
     } else {
-      // Update last login
       await usersCollection.updateOne(
         { _id: user._id },
         { $set: { lastLogin: new Date() } }
       );
     }
     
-    // Generate JWT
     const token = generateToken(user);
     
     res.status(200).json({
@@ -65,23 +59,85 @@ const googleAuth = async (req, res) => {
   }
 };
 
-// GET all users (admin only - protected)
+// CREATE new user (manual POST endpoint for /users)
+const createUser = async (req, res) => {
+  try {
+    const { email, name, avatar, googleId, role } = req.body;
+    
+    // Validate required fields
+    if (!email || !name) {
+      return res.status(400).json({ 
+        error: "Validation failed", 
+        message: "Email and name are required fields" 
+      });
+    }
+    
+    // Validate email format
+    const emailRegex = /^\S+@\S+\.\S+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ 
+        error: "Validation failed", 
+        message: "Invalid email format" 
+      });
+    }
+    
+    // Check if user already exists
+    const existingUser = await mongodb
+      .getDb()
+      .collection("users")
+      .findOne({ email });
+    
+    if (existingUser) {
+      return res.status(409).json({ error: "User already exists" });
+    }
+    
+    // Create new user object
+    const newUser = {
+      email,
+      name,
+      avatar: avatar || "",
+      googleId: googleId || `manual_${Date.now()}`,
+      role: role || "user",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      lastLogin: new Date(),
+      isActive: true,
+      emailVerified: false
+    };
+    
+    const result = await mongodb
+      .getDb()
+      .collection("users")
+      .insertOne(newUser);
+    
+    res.status(201).json({ 
+      message: "User created successfully",
+      user: { ...newUser, _id: result.insertedId }
+    });
+  } catch (err) {
+    console.error("Create user error:", err);
+    res.status(500).json({ error: "Failed to create user", message: err.message });
+  }
+};
+
+// GET all users
 const getAllUsers = async (req, res) => {
   try {
     const result = await mongodb
-      .getDb()  
+      .getDb()
       .collection("users")
       .find()
-      .project({ password: 0 }) 
+      .project({ password: 0 })
       .toArray();
     
     res.status(200).json(result);
   } catch (err) {
+    console.error("Get all users error:", err);
     res.status(500).json({ error: "Failed to retrieve users", message: err.message });
   }
 };
 
-// GET single user
+// GET single user by ID
 const getSingleUser = async (req, res) => {
   const userId = req.params.id;
   
@@ -91,7 +147,7 @@ const getSingleUser = async (req, res) => {
   
   try {
     const result = await mongodb
-      .getDb()  
+      .getDb()
       .collection("users")
       .findOne({ _id: new ObjectId(userId) }, { projection: { password: 0 } });
     
@@ -101,6 +157,7 @@ const getSingleUser = async (req, res) => {
     
     res.status(200).json(result);
   } catch (err) {
+    console.error("Get single user error:", err);
     res.status(500).json({ error: "Failed to retrieve user", message: err.message });
   }
 };
@@ -122,21 +179,27 @@ const updateUser = async (req, res) => {
   if (isActive !== undefined) updateData.isActive = isActive;
   updateData.updatedAt = new Date();
   
+  if (Object.keys(updateData).length === 1 && updateData.updatedAt) {
+    return res.status(400).json({ error: "No valid fields provided for update" });
+  }
+  
   try {
     const response = await mongodb
-      .getDb()  
+      .getDb()
       .collection("users")
-      .updateOne(
+      .findOneAndUpdate(
         { _id: new ObjectId(userId) },
-        { $set: updateData }
+        { $set: updateData },
+        { returnDocument: 'after' }
       );
     
-    if (response.matchedCount === 0) {
+    if (!response.value) {
       return res.status(404).json({ error: "User not found" });
     }
     
-    res.status(200).json({ message: "User updated successfully" });
+    res.status(200).json(response.value);
   } catch (err) {
+    console.error("Update user error:", err);
     res.status(500).json({ error: "Update failed", message: err.message });
   }
 };
@@ -151,7 +214,7 @@ const deleteUser = async (req, res) => {
   
   try {
     const response = await mongodb
-      .getDb() 
+      .getDb()
       .collection("users")
       .deleteOne({ _id: new ObjectId(userId) });
     
@@ -159,8 +222,12 @@ const deleteUser = async (req, res) => {
       return res.status(404).json({ error: "User not found" });
     }
     
-    res.status(200).json({ message: "User deleted successfully" });
+    res.status(200).json({ 
+      message: "User deleted successfully",
+      deletedCount: response.deletedCount
+    });
   } catch (err) {
+    console.error("Delete user error:", err);
     res.status(500).json({ error: "Delete failed", message: err.message });
   }
 };
@@ -169,7 +236,7 @@ const deleteUser = async (req, res) => {
 const getMyProfile = async (req, res) => {
   try {
     const user = await mongodb
-      .getDb()  
+      .getDb()
       .collection("users")
       .findOne({ _id: new ObjectId(req.user.userId) }, { projection: { password: 0 } });
     
@@ -179,15 +246,43 @@ const getMyProfile = async (req, res) => {
     
     res.status(200).json(user);
   } catch (err) {
+    console.error("Get profile error:", err);
     res.status(500).json({ error: "Failed to get profile", message: err.message });
+  }
+};
+
+// GET user by email
+const getUserByEmail = async (req, res) => {
+  const { email } = req.params;
+  
+  if (!email) {
+    return res.status(400).json({ error: "Email parameter is required" });
+  }
+  
+  try {
+    const result = await mongodb
+      .getDb()
+      .collection("users")
+      .findOne({ email }, { projection: { password: 0 } });
+    
+    if (!result) {
+      return res.status(404).json({ error: "User not found" });
+    }
+    
+    res.status(200).json(result);
+  } catch (err) {
+    console.error("Get user by email error:", err);
+    res.status(500).json({ error: "Failed to retrieve user", message: err.message });
   }
 };
 
 module.exports = {
   googleAuth,
+  createUser,
   getAllUsers,
   getSingleUser,
   updateUser,
   deleteUser,
-  getMyProfile
+  getMyProfile,
+  getUserByEmail
 };
