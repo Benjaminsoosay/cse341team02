@@ -26,55 +26,93 @@ const contactSchema = new mongoose.Schema({
     default: 'Blue'
   },
   birthday: {
-    type: Date
+    type: Date,
+    default: null
   },
   phone: {
     type: String,
-    trim: true
+    trim: true,
+    default: ''
   },
   address: {
-    street: String,
-    city: String,
-    state: String,
-    country: String,
-    postalCode: String
+    street: { type: String, default: '' },
+    city: { type: String, default: '' },
+    state: { type: String, default: '' },
+    country: { type: String, default: '' },
+    postalCode: { type: String, default: '' }
   },
   company: {
     type: String,
-    trim: true
+    trim: true,
+    default: ''
   },
   jobTitle: {
     type: String,
-    trim: true
+    trim: true,
+    default: ''
   },
   website: {
     type: String,
-    trim: true
+    trim: true,
+    default: ''
   },
   notes: {
-    type: String
+    type: String,
+    default: ''
   },
   createdBy: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'User'
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now
-  },
-  updatedAt: {
-    type: Date
+    ref: 'User',
+    index: true
   },
   isActive: {
     type: Boolean,
     default: true
   }
+}, {
+  timestamps: {
+    createdAt: true,
+    updatedAt: true
+  }
 });
 
-// Indexes
+// Indexes for better query performance
 contactSchema.index({ email: 1 });
 contactSchema.index({ firstName: 1, lastName: 1 });
 contactSchema.index({ createdAt: -1 });
+contactSchema.index({ isActive: 1 });
+contactSchema.index({ createdBy: 1, createdAt: -1 });
 
-// Updated model name to match filename (lowercase, plural)
-module.exports = mongoose.model('contacts', contactSchema);
+// Add a compound index for common queries (active contacts sorted by creation)
+contactSchema.index({ isActive: 1, createdAt: -1 });
+
+// Optional: Add text search index if needed for search functionality
+// contactSchema.index({ firstName: 'text', lastName: 'text', email: 'text' });
+
+// Virtual for full name
+contactSchema.virtual('fullName').get(function() {
+  return `${this.firstName} ${this.lastName}`;
+});
+
+// Ensure virtuals are included in JSON output
+contactSchema.set('toJSON', { virtuals: true });
+contactSchema.set('toObject', { virtuals: true });
+
+// Pre-save middleware to update updatedAt (though timestamps handles this)
+contactSchema.pre('save', function(next) {
+  // Add any pre-save logic here if needed
+  // For example: sanitize phone number or format email
+  if (this.email) {
+    this.email = this.email.toLowerCase();
+  }
+  next();
+});
+
+// Pre-update middleware to update updatedAt
+contactSchema.pre('findOneAndUpdate', function(next) {
+  this.set({ updatedAt: new Date() });
+  next();
+});
+
+// Export with model name matching the collection name
+module.exports = mongoose.model('Contact', contactSchema);

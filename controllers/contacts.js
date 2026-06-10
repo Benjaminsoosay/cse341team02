@@ -2,26 +2,56 @@ const Contact = require("../models/contacts");
 const mongoose = require("mongoose");
 
 /* =========================
-   GET ALL CONTACTS
+   GET ALL CONTACTS (with proper pagination)
 ========================= */
 const getAll = async (req, res) => {
+  // Parse pagination parameters
   let limit = parseInt(req.query.limit);
-
+  let page = parseInt(req.query.page);
+  
+  // Set defaults (safe values instead of unlimited)
   if (isNaN(limit) || limit <= 0) {
-    limit = 0; // no limit
+    limit = 10; // DEFAULT limit instead of 0 (unlimited)
   }
-
+  
+  if (isNaN(page) || page <= 0) {
+    page = 1;
+  }
+  
+  // Cap maximum limit to prevent abuse and timeout
+  const MAX_LIMIT = 100;
+  if (limit > MAX_LIMIT) {
+    limit = MAX_LIMIT;
+  }
+  
+  // Calculate how many documents to skip for pagination
+  const skip = (page - 1) * limit;
+  
   try {
-    let query = Contact.find();
+    // Get total count for pagination metadata
+    const totalCount = await Contact.countDocuments();
     
-    if (limit > 0) {
-      query = query.limit(limit);
-    }
+    // Apply pagination correctly with skip and limit
+    const result = await Contact.find()
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .exec(); // exec() ensures it's a fully executed query
     
-    const result = await query.sort({ createdAt: -1 });
-    
-    return res.status(200).json(result);
+    // Return with pagination metadata
+    return res.status(200).json({
+      data: result,
+      pagination: {
+        currentPage: page,
+        pageSize: limit,
+        totalItems: totalCount,
+        totalPages: Math.ceil(totalCount / limit),
+        hasNextPage: page * limit < totalCount,
+        hasPrevPage: page > 1
+      }
+    });
   } catch (error) {
+    console.error('Database error in getAll:', error);
     return res.status(500).json({
       error: "Failed to retrieve contacts",
       message: error.message
@@ -53,6 +83,7 @@ const getSingle = async (req, res) => {
 
     return res.status(200).json(result);
   } catch (error) {
+    console.error('Database error in getSingle:', error);
     return res.status(500).json({
       error: "Failed to retrieve contact",
       message: error.message
@@ -109,6 +140,7 @@ const createContact = async (req, res) => {
         error: "Contact with this email already exists"
       });
     }
+    console.error('Database error in createContact:', err);
     return res.status(500).json({
       error: "Server error",
       message: err.message
@@ -180,6 +212,7 @@ const updateContact = async (req, res) => {
         error: "Contact with this email already exists"
       });
     }
+    console.error('Database error in updateContact:', err);
     return res.status(500).json({
       error: "Update failed",
       message: err.message
@@ -216,6 +249,7 @@ const deleteContact = async (req, res) => {
       deletedCount: 1
     });
   } catch (err) {
+    console.error('Database error in deleteContact:', err);
     return res.status(500).json({
       error: "Delete failed",
       message: err.message
