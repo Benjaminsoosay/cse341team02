@@ -3,12 +3,12 @@ const mongoose = require('mongoose');
 const rsvpSchema = new mongoose.Schema({
   eventId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Event',
+    ref: 'events',
     required: [true, 'Event ID is required']
   },
   userId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
+    ref: 'users',
     required: [true, 'User ID is required']
   },
   userName: {
@@ -75,4 +75,5 @@ rsvpSchema.index({ eventId: 1, status: 1 });
 rsvpSchema.index({ userId: 1 });
 rsvpSchema.index({ status: 1 });
 
-module.exports = mongoose.model('RSVP', rsvpSchema);
+// Updated model name to match filename (lowercase, plural)
+module.exports = mongoose.model('rsvps', rsvpSchema);

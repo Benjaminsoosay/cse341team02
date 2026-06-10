@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-const userSchema = new mongoose.Schema({
+const contactSchema = new mongoose.Schema({
   firstName: {
     type: String,
     required: [true, 'First name is required'],
@@ -21,19 +21,9 @@ const userSchema = new mongoose.Schema({
     lowercase: true,
     match: [/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/, 'Please enter a valid email']
   },
-  password: {
-    type: String,
-    required: [true, 'Password is required'],
-    minlength: [6, 'Password must be at least 6 characters']
-  },
-  role: {
-    type: String,
-    enum: ['admin', 'editor', 'moderator', 'viewer', 'user'],
-    default: 'user'
-  },
   favoriteColor: {
     type: String,
-    default: 'Red'
+    default: 'Blue'
   },
   birthday: {
     type: Date
@@ -45,6 +35,7 @@ const userSchema = new mongoose.Schema({
   address: {
     street: String,
     city: String,
+    state: String,
     country: String,
     postalCode: String
   },
@@ -63,14 +54,15 @@ const userSchema = new mongoose.Schema({
   notes: {
     type: String
   },
+  createdBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  },
   createdAt: {
     type: Date,
     default: Date.now
   },
   updatedAt: {
-    type: Date
-  },
-  lastLogin: {
     type: Date
   },
   isActive: {
@@ -79,9 +71,10 @@ const userSchema = new mongoose.Schema({
   }
 });
 
-// Create indexes for better query performance
-userSchema.index({ email: 1 });
-userSchema.index({ role: 1 });
-userSchema.index({ createdAt: -1 });
+// Indexes
+contactSchema.index({ email: 1 });
+contactSchema.index({ firstName: 1, lastName: 1 });
+contactSchema.index({ createdAt: -1 });
 
-module.exports = mongoose.model('User', userSchema);
+// Updated model name to match filename (lowercase, plural)
+module.exports = mongoose.model('contacts', contactSchema);

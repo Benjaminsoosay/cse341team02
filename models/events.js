@@ -93,4 +93,5 @@ eventSchema.index({ createdBy: 1 });
 eventSchema.index({ category: 1 });
 eventSchema.index({ isVirtual: 1 });
 
-module.exports = mongoose.model('Event', eventSchema);
+// Updated model name to match filename (lowercase, plural)
+module.exports = mongoose.model('events', eventSchema);
