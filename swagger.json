@@ -66,6 +66,7 @@
     },
     "/contacts": {
       "get": {
+        "tags": ["Contacts"],
         "summary": "Get all contacts",
         "description": "Retrieves a list of all contacts with optional pagination",
         "produces": ["application/json"],
@@ -106,6 +107,7 @@
         }
       },
       "post": {
+        "tags": ["Contacts"],
         "summary": "Create a new contact",
         "description": "Creates a new contact with validation. All required fields must be provided.",
         "consumes": ["application/json"],
@@ -141,6 +143,7 @@
     },
     "/contacts/{id}": {
       "get": {
+        "tags": ["Contacts"],
         "summary": "Get a single contact",
         "description": "Retrieves a contact by their unique ID",
         "produces": ["application/json"],
@@ -169,6 +172,7 @@
         }
       },
       "put": {
+        "tags": ["Contacts"],
         "summary": "Update a contact",
         "description": "Updates an existing contact by ID. All fields are optional for update.",
         "consumes": ["application/json"],
@@ -212,6 +216,7 @@
         }
       },
       "delete": {
+        "tags": ["Contacts"],
         "summary": "Delete a contact",
         "description": "Permanently deletes a contact by ID",
         "produces": ["application/json"],
@@ -249,6 +254,7 @@
     },
     "/users": {
       "get": {
+        "tags": ["Users"],
         "summary": "Get all users",
         "description": "Retrieves a list of all registered users",
         "produces": ["application/json"],
@@ -268,6 +274,7 @@
         }
       },
       "post": {
+        "tags": ["Users"],
         "summary": "Create a new user",
         "description": "Registers a new user",
         "consumes": ["application/json"],
@@ -284,7 +291,10 @@
         ],
         "responses": {
           "201": {
-            "description": "User created successfully"
+            "description": "User created successfully",
+            "schema": {
+              "$ref": "#/definitions/User"
+            }
           },
           "400": {
             "description": "Bad request"
@@ -300,6 +310,7 @@
     },
     "/users/{id}": {
       "get": {
+        "tags": ["Users"],
         "summary": "Get a user by ID",
         "description": "Retrieves a specific user by their ID",
         "produces": ["application/json"],
@@ -328,6 +339,7 @@
         }
       },
       "put": {
+        "tags": ["Users"],
         "summary": "Update a user",
         "description": "Updates user information",
         "consumes": ["application/json"],
@@ -350,7 +362,10 @@
         ],
         "responses": {
           "200": {
-            "description": "User updated successfully"
+            "description": "User updated successfully",
+            "schema": {
+              "$ref": "#/definitions/User"
+            }
           },
           "400": {
             "description": "Invalid ID or data"
@@ -361,6 +376,7 @@
         }
       },
       "delete": {
+        "tags": ["Users"],
         "summary": "Delete a user",
         "description": "Deletes a user account",
         "parameters": [
@@ -373,7 +389,13 @@
         ],
         "responses": {
           "200": {
-            "description": "User deleted successfully"
+            "description": "User deleted successfully",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "message": {"type": "string", "example": "User deleted successfully"}
+              }
+            }
           },
           "400": {
             "description": "Invalid ID format"
@@ -386,6 +408,7 @@
     },
     "/events": {
       "get": {
+        "tags": ["Events"],
         "summary": "Get all events",
         "description": "Retrieves all events with filtering options",
         "produces": ["application/json"],
@@ -422,6 +445,7 @@
         }
       },
       "post": {
+        "tags": ["Events"],
         "summary": "Create a new event",
         "description": "Creates a new event with validation (minimum 7 fields)",
         "consumes": ["application/json"],
@@ -457,6 +481,7 @@
     },
     "/events/{id}": {
       "get": {
+        "tags": ["Events"],
         "summary": "Get event by ID",
         "description": "Retrieves a specific event",
         "produces": ["application/json"],
@@ -484,6 +509,7 @@
         }
       },
       "put": {
+        "tags": ["Events"],
         "summary": "Update an event",
         "description": "Updates event information",
         "consumes": ["application/json"],
@@ -506,7 +532,10 @@
         ],
         "responses": {
           "200": {
-            "description": "Event updated successfully"
+            "description": "Event updated successfully",
+            "schema": {
+              "$ref": "#/definitions/Event"
+            }
           },
           "400": {
             "description": "Invalid input"
@@ -520,6 +549,7 @@
         }
       },
       "delete": {
+        "tags": ["Events"],
         "summary": "Delete an event",
         "description": "Deletes an event",
         "parameters": [
@@ -532,7 +562,13 @@
         ],
         "responses": {
           "200": {
-            "description": "Event deleted successfully"
+            "description": "Event deleted successfully",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "message": {"type": "string", "example": "Event deleted successfully"}
+              }
+            }
           },
           "400": {
             "description": "Invalid ID"
@@ -545,6 +581,7 @@
     },
     "/rsvps": {
       "get": {
+        "tags": ["RSVPs"],
         "summary": "Get all RSVPs",
         "description": "Retrieves all RSVP responses",
         "produces": ["application/json"],
@@ -573,6 +610,7 @@
         }
       },
       "post": {
+        "tags": ["RSVPs"],
         "summary": "Create RSVP",
         "description": "Creates an RSVP for an event",
         "consumes": ["application/json"],
@@ -589,7 +627,10 @@
         ],
         "responses": {
           "201": {
-            "description": "RSVP created successfully"
+            "description": "RSVP created successfully",
+            "schema": {
+              "$ref": "#/definitions/RSVP"
+            }
           },
           "400": {
             "description": "Invalid input"
@@ -602,6 +643,7 @@
     },
     "/rsvps/{id}": {
       "get": {
+        "tags": ["RSVPs"],
         "summary": "Get RSVP by ID",
         "description": "Retrieves a specific RSVP",
         "produces": ["application/json"],
@@ -626,6 +668,7 @@
         }
       },
       "put": {
+        "tags": ["RSVPs"],
         "summary": "Update RSVP",
         "description": "Updates an existing RSVP",
         "consumes": ["application/json"],
@@ -648,7 +691,10 @@
         ],
         "responses": {
           "200": {
-            "description": "RSVP updated successfully"
+            "description": "RSVP updated successfully",
+            "schema": {
+              "$ref": "#/definitions/RSVP"
+            }
           },
           "404": {
             "description": "RSVP not found"
@@ -656,6 +702,7 @@
         }
       },
       "delete": {
+        "tags": ["RSVPs"],
         "summary": "Delete RSVP",
         "description": "Cancels an RSVP",
         "parameters": [
@@ -668,7 +715,13 @@
         ],
         "responses": {
           "200": {
-            "description": "RSVP cancelled successfully"
+            "description": "RSVP cancelled successfully",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "message": {"type": "string", "example": "RSVP cancelled successfully"}
+              }
+            }
           },
           "404": {
             "description": "RSVP not found"
@@ -738,7 +791,9 @@
       "properties": {
         "email": {"type": "string", "format": "email"},
         "name": {"type": "string", "minLength": 2, "maxLength": 100},
-        "avatar": {"type": "string", "format": "uri"}
+        "avatar": {"type": "string", "format": "uri"},
+        "googleId": {"type": "string"},
+        "role": {"type": "string", "enum": ["user", "admin"], "default": "user"}
       }
     },
     "UserUpdate": {
