@@ -162,7 +162,7 @@ const getSingleUser = async (req, res) => {
   }
 };
 
-// UPDATE user
+// UPDATE user - FIXED VERSION
 const updateUser = async (req, res) => {
   const userId = req.params.id;
   
@@ -184,7 +184,7 @@ const updateUser = async (req, res) => {
   }
   
   try {
-    const response = await mongodb
+    const result = await mongodb
       .getDb()
       .collection("users")
       .findOneAndUpdate(
@@ -193,11 +193,12 @@ const updateUser = async (req, res) => {
         { returnDocument: 'after' }
       );
     
-    if (!response.value) {
+    // FIX: Check if result exists and has value property
+    if (!result || !result.value) {
       return res.status(404).json({ error: "User not found" });
     }
     
-    res.status(200).json(response.value);
+    res.status(200).json(result.value);
   } catch (err) {
     console.error("Update user error:", err);
     res.status(500).json({ error: "Update failed", message: err.message });
