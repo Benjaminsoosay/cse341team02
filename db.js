@@ -1,47 +1,37 @@
 ﻿const { MongoClient } = require('mongodb');
-require('dotenv').config();
+const mongoose = require('mongoose');
 
-let _db;
-let _client;
+let _db = null;
 
-const initDb = (callback) => {
+const initDb = async (callback) => {
   if (_db) {
-    console.log('Database is already initialized');
+    console.log('Database already initialized');
     return callback(null, _db);
   }
   
-  MongoClient.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/event_management')
-    .then((client) => {
-      _client = client;
-      _db = client.db(); // This returns the database object
-      console.log(`✅ MongoDB Connected to database: ${_db.databaseName}`);
-      callback(null, _db);
-    })
-    .catch((err) => {
-      console.error('MongoDB connection error:', err);
-      callback(err);
+  try {
+    const client = new MongoClient(process.env.MONGODB_URI, {
+      serverSelectionTimeoutMS: 30000,
+      connectTimeoutMS: 30000,
+      socketTimeoutMS: 30000,
     });
+    
+    await client.connect();
+    _db = client.db();
+    
+    console.log('✅ MongoDB connected successfully');
+    callback(null, _db);
+  } catch (error) {
+    console.error('❌ MongoDB connection error:', error);
+    callback(error, null);
+  }
 };
 
 const getDb = () => {
   if (!_db) {
-    throw Error('Database not initialized. Call initDb first.');
+    throw new Error('Database not initialized');
   }
   return _db;
 };
 
-const getClient = () => {
-  if (!_client) {
-    throw Error('MongoDB client not initialized');
-  }
-  return _client;
-};
-
-const closeDb = async () => {
-  if (_client) {
-    await _client.close();
-    console.log('Database connection closed');
-  }
-};
-
-module.exports = { initDb, getDb, getClient, closeDb };
+module.exports = { initDb, getDb };

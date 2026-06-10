@@ -1,16 +1,37 @@
-const express = require("express");
+const express = require('express');
 const router = express.Router();
-const eventsController = require("../controllers/events");
-const { verifyToken } = require("../middleware/auth");
-const { validateEvent, validateObjectId } = require("../middleware/validation");
+const {
+  getAllEvents,
+  getEventById,
+  createEvent,
+  updateEvent,
+  deleteEvent
+} = require('../controllers/events');
 
-// GET routes (public)
-router.get("/", eventsController.getAllEvents);
-router.get("/:id", validateObjectId, eventsController.getSingleEvent);
-
-// POST, PUT, DELETE require authentication
-router.post("/", verifyToken, validateEvent, eventsController.createEvent);
-router.put("/:id", verifyToken, validateObjectId, validateEvent, eventsController.updateEvent);
-router.delete("/:id", verifyToken, validateObjectId, eventsController.deleteEvent);
+/**
+ * @swagger
+ * /events:
+ *   get:
+ *     summary: Get all events
+ *     responses:
+ *       200:
+ *         description: List of events
+ *   post:
+ *     summary: Create a new event
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/Event'
+ *     responses:
+ *       201:
+ *         description: Event created
+ */
+router.get('/', getAllEvents);
+router.get('/:id', getEventById);
+router.post('/', createEvent);
+router.put('/:id', updateEvent);
+router.delete('/:id', deleteEvent);
 
 module.exports = router;

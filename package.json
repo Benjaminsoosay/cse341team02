@@ -1,73 +1,27 @@
 {
-  "name": "cse341-final-project",
+  "name": "final-project-api",
   "version": "1.0.0",
-  "description": "Final project API with OAuth, JWT, MongoDB, contacts, users, events, and RSVPs management",
+  "description": "API with 4 collections, CRUD, OAuth, and testing",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "start:prod": "NODE_ENV=production node server.js",
     "dev": "nodemon server.js",
-    "swagger": "node swagger.js",
-    "swagger:generate": "node scripts/generate-swagger.js",
-    "test": "jest",
-    "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage",
-    "lint": "eslint .",
-    "lint:fix": "eslint . --fix",
-    "format": "prettier --write .",
-    "db:seed": "node scripts/seedDatabase.js",
-    "db:drop": "node scripts/dropDatabase.js"
+    "test": "jest"
   },
-  "keywords": [
-    "api",
-    "contacts",
-    "users",
-    "events",
-    "rsvps",
-    "mongodb",
-    "express",
-    "jwt",
-    "oauth",
-    "swagger"
-  ],
-  "author": "CSE341 Team 02",
-  "license": "MIT",
   "dependencies": {
-    "@google-cloud/local-auth": "^2.1.0",
-    "bcryptjs": "^2.4.3",
-    "cors": "^2.8.5",
-    "dotenv": "^16.3.1",
     "express": "^4.18.2",
-    "express-rate-limit": "^7.1.5",
-    "express-session": "^1.19.0",
-    "express-validator": "^7.3.2",
-    "google-auth-library": "^9.4.0",
-    "googleapis": "^105.0.0",
-    "helmet": "^7.1.0",
-    "jsonwebtoken": "^9.0.2",
-    "mongodb": "^6.8.0",
-    "mongoose": "^8.4.0",
-    "swagger-jsdoc": "^6.2.8",
+    "mongoose": "^7.5.0",
+    "dotenv": "^16.3.1",
+    "cors": "^2.8.5",
     "swagger-ui-express": "^5.0.0",
-    "validate.js": "^0.13.1"
+    "swagger-jsdoc": "^6.2.8",
+    "express-session": "^1.17.3",
+    "passport": "^0.6.0",
+    "passport-google-oauth20": "^2.0.0"
   },
   "devDependencies": {
-    "eslint": "^8.57.0",
-    "jest": "^29.7.0",
-    "nodemon": "^3.1.14",
-    "prettier": "^3.2.5",
-    "supertest": "^6.3.4"
-  },
-  "engines": {
-    "node": ">=18.0.0",
-    "npm": ">=9.0.0"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/yourusername/cse341-final-project.git"
-  },
-  "bugs": {
-    "url": "https://github.com/yourusername/cse341-final-project/issues"
-  },
-  "homepage": "https://github.com/yourusername/cse341-final-project#readme"
+    "nodemon": "^3.0.1",
+    "jest": "^29.6.4",
+    "supertest": "^6.3.3"
+  }
 }
