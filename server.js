@@ -13,8 +13,18 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 8080;
 
+// Verify MongoDB URI is loaded (without exposing it)
+if (!process.env.MONGODB_URI) {
+  console.error('❌ MONGODB_URI is not defined in environment variables');
+  console.error('Please set MONGODB_URI in your .env file');
+  process.exit(1);
+}
+
+console.log('✅ MongoDB configuration loaded');
+console.log(`📊 Environment: ${process.env.NODE_ENV || "development"}`);
+
 app.use(cors({
-  origin: ['https://cse341team02.onrender.com', 'http://localhost:8080', 'https://accounts.google.com'],
+  origin: ['https://cse341team02.onrender.com', 'http://localhost:8080', 'http://localhost:3000', 'https://accounts.google.com'],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Origin', 'X-Requested-With'],
   credentials: true
@@ -45,7 +55,7 @@ app.get('/api/swagger.json', (req, res) => {
   res.json(swaggerDocument);
 });
 
-// Swagger UI options - NO AUTHENTICATION
+// Swagger UI options
 const swaggerOptions = {
   swaggerOptions: {
     url: '/swagger.json',
@@ -54,7 +64,6 @@ const swaggerOptions = {
     tryItOutEnabled: true,
     filter: true,
     displayRequestDuration: true,
-    // Disable all authorization UI
     authAction: {},
     authorizations: {},
     displayOperationId: false,
@@ -107,7 +116,7 @@ app.get('/auth/google', (req, res) => {
   res.redirect(authUrl);
 });
 
-// UPDATED OAuth Callback - Creates user directly in database
+// OAuth Callback - Creates user directly in database
 app.get('/auth/google/callback', async (req, res) => {
   const { code } = req.query;
   
@@ -116,6 +125,11 @@ app.get('/auth/google/callback', async (req, res) => {
   }
   
   try {
+    const db = getDb();
+    if (!db) {
+      throw new Error('Database not initialized yet');
+    }
+    
     // Exchange code for tokens
     const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
       method: 'POST',
@@ -143,19 +157,17 @@ app.get('/auth/google/callback', async (req, res) => {
     const userInfo = await userInfoResponse.json();
     
     // Create or update user in database
-    const db = getDb();
     const usersCollection = db.collection('users');
     
     let user = await usersCollection.findOne({ email: userInfo.email });
     
     if (!user) {
-      // Create new user
       const newUser = {
         email: userInfo.email,
         name: userInfo.name,
         avatar: userInfo.picture,
         googleId: userInfo.id,
-        role: 'user', // Default role
+        role: 'user',
         createdAt: new Date(),
         updatedAt: new Date(),
         lastLogin: new Date()
@@ -165,7 +177,6 @@ app.get('/auth/google/callback', async (req, res) => {
       user = { _id: result.insertedId, ...newUser };
       console.log(`✅ New user created: ${userInfo.email}`);
     } else {
-      // Update existing user
       await usersCollection.updateOne(
         { email: userInfo.email },
         { 
@@ -181,12 +192,10 @@ app.get('/auth/google/callback', async (req, res) => {
       console.log(`🔄 User updated: ${userInfo.email}`);
     }
     
-    // Store in session
     req.session.accessToken = tokens.access_token;
     req.session.user = user;
     req.session.userId = user._id;
     
-    // Send success response
     res.json({
       success: true,
       access_token: tokens.access_token,
@@ -235,9 +244,8 @@ app.get('/auth/logout', (req, res) => {
   });
 });
 
-// Simple test token endpoint (for development)
+// Development test token endpoint
 app.post('/auth/test-token', (req, res) => {
-  // This is a development endpoint - remove in production
   res.json({
     access_token: 'test-token-for-development',
     token_type: 'Bearer',
@@ -298,25 +306,80 @@ app.get("/login", (req, res) => {
 app.get('/test-db', async (req, res) => {
   try {
     const db = getDb();
+    if (!db) {
+      return res.status(500).json({ 
+        error: 'Database not initialized',
+        message: 'Database connection not established yet'
+      });
+    }
+    
     const collections = await db.listCollections().toArray();
+    
+    const counts = {};
+    for (const collection of collections) {
+      counts[collection.name] = await db.collection(collection.name).countDocuments();
+    }
+    
     res.json({ 
+      success: true,
       message: 'Database connected successfully',
+      databaseName: db.databaseName,
       collections: collections.map(c => c.name),
-      dbName: db.databaseName,
-      status: 'Connected'
+      counts: counts,
+      status: 'Connected',
+      timestamp: new Date().toISOString()
     });
   } catch (error) {
+    console.error('Database test error:', error);
     res.status(500).json({ 
+      success: false,
       error: error.message,
-      message: 'Database not initialized yet. Try again in a moment.'
+      message: 'Database error occurred',
+      timestamp: new Date().toISOString()
     });
   }
 });
 
-// Public users endpoint (temporary - remove in production)
+// Setup collections endpoint
+app.post('/setup-collections', async (req, res) => {
+  try {
+    const db = getDb();
+    if (!db) {
+      return res.status(500).json({ error: 'Database not initialized' });
+    }
+    
+    const collections = ['contacts', 'users', 'events', 'rsvps'];
+    const results = {};
+    
+    for (const collectionName of collections) {
+      const exists = await db.listCollections({ name: collectionName }).hasNext();
+      if (!exists) {
+        await db.createCollection(collectionName);
+        results[collectionName] = 'Created';
+      } else {
+        results[collectionName] = 'Already exists';
+      }
+    }
+    
+    res.json({
+      success: true,
+      message: 'Collections setup completed',
+      results: results
+    });
+  } catch (error) {
+    console.error('Setup error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Public users endpoint (development only)
 app.get('/public-users', async (req, res) => {
   try {
     const db = getDb();
+    if (!db) {
+      return res.status(500).json({ error: 'Database not initialized' });
+    }
+    
     const users = await db.collection('users').find({}).toArray();
     res.json({
       count: users.length,
@@ -353,14 +416,37 @@ app.use((err, req, res, next) => {
 // Initialize database and start server
 initDb((err, db) => {
   if (err) {
-    console.error('Failed to connect to MongoDB:', err);
+    console.error('❌ Failed to connect to MongoDB:', err);
+    console.error('Please check your MongoDB connection string and network settings');
     process.exit(1);
   }
   
-  console.log('Database initialized successfully');
+  console.log('✅ Database initialized successfully');
+  console.log(`📊 Connected to database: ${db.databaseName}`);
+  
+  // Auto-create collections if they don't exist
+  const setupCollections = async () => {
+    try {
+      const collections = ['contacts', 'users', 'events', 'rsvps'];
+      for (const collectionName of collections) {
+        const exists = await db.listCollections({ name: collectionName }).hasNext();
+        if (!exists) {
+          await db.createCollection(collectionName);
+          console.log(`✅ Created collection: ${collectionName}`);
+        } else {
+          console.log(`📁 Collection exists: ${collectionName}`);
+        }
+      }
+      console.log('🎯 All collections ready');
+    } catch (error) {
+      console.error('⚠️ Error setting up collections:', error.message);
+    }
+  };
+  
+  setupCollections();
   
   app.listen(PORT, () => {
-    console.log(`🚀 Server running on port ${PORT}`);
+    console.log(`\n🚀 Server running on port ${PORT}`);
     console.log(`📚 API Documentation: http://localhost:${PORT}/api-docs`);
     console.log(`📄 Swagger JSON: http://localhost:${PORT}/swagger.json`);
     console.log(`🏠 Home route: http://localhost:${PORT}`);
@@ -368,5 +454,8 @@ initDb((err, db) => {
     console.log(`🗄️ Database: Connected to ${db.databaseName}`);
     console.log(`🔐 Google OAuth: http://localhost:${PORT}/auth/google`);
     console.log(`👥 Public Users: http://localhost:${PORT}/public-users`);
+    console.log(`🧪 Test Database: http://localhost:${PORT}/test-db`);
+    console.log(`⚙️ Setup Collections: http://localhost:${PORT}/setup-collections`);
+    console.log(`\n✅ API is ready to use!`);
   });
-})
+});
