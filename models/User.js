@@ -18,9 +18,14 @@ const userSchema = new mongoose.Schema({
     unique: true,
     sparse: true
   },
+  githubId: {
+    type: String,
+    unique: true,
+    sparse: true
+  },
   role: {
     type: String,
-    enum: ['user', 'admin'],
+    enum: ['user', 'admin', 'editor', 'viewer', 'moderator'],
     default: 'user'
   }
 }, { timestamps: true });
