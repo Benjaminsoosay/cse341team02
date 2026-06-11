@@ -3,7 +3,7 @@
   "info": {
     "title": "Final Project API",
     "version": "1.0.0",
-    "description": "API for Contacts, Events, RSVPs, and Users with full CRUD operations"
+    "description": "API for Contacts, Events, RSVPs, and Users with full CRUD operations. Authentication via GitHub OAuth only."
   },
   "servers": [
     {
@@ -20,7 +20,21 @@
       "sessionAuth": {
         "type": "apiKey",
         "in": "cookie",
-        "name": "connect.sid"
+        "name": "connect.sid",
+        "description": "Session cookie from GitHub OAuth authentication"
+      },
+      "githubOAuth": {
+        "type": "oauth2",
+        "description": "GitHub OAuth 2.0 Authentication",
+        "flows": {
+          "authorizationCode": {
+            "authorizationUrl": "https://github.com/login/oauth/authorize",
+            "tokenUrl": "https://github.com/login/oauth/access_token",
+            "scopes": {
+              "user:email": "Read user email addresses"
+            }
+          }
+        }
       }
     },
     "schemas": {
@@ -125,7 +139,6 @@
       },
       "User": {
         "type": "object",
-        "required": ["name", "email"],
         "properties": {
           "_id": {
             "type": "string"
@@ -136,25 +149,49 @@
           "email": {
             "type": "string"
           },
-          "googleId": {
+          "username": {
+            "type": "string"
+          },
+          "githubId": {
+            "type": "string"
+          },
+          "avatarUrl": {
             "type": "string"
           },
           "role": {
             "type": "string",
-            "enum": ["user", "admin"],
+            "enum": ["user", "admin", "editor", "viewer", "moderator"],
             "default": "user"
+          },
+          "provider": {
+            "type": "string",
+            "enum": ["github", "local"],
+            "default": "github"
+          },
+          "lastLogin": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
           }
         },
         "example": {
           "name": "Jane Smith",
           "email": "jane@example.com",
-          "role": "user"
+          "username": "janesmith",
+          "role": "user",
+          "provider": "github"
         }
       },
       "Error": {
         "type": "object",
         "properties": {
           "error": {
+            "type": "string"
+          },
+          "message": {
             "type": "string"
           }
         }
@@ -522,7 +559,7 @@
         }
       },
       "post": {
-        "summary": "Create a new RSVP (requires OAuth authentication)",
+        "summary": "Create a new RSVP (requires GitHub authentication)",
         "tags": ["RSVPs"],
         "security": [
           {
@@ -590,7 +627,7 @@
         }
       },
       "put": {
-        "summary": "Update an RSVP (requires OAuth authentication)",
+        "summary": "Update an RSVP (requires GitHub authentication)",
         "tags": ["RSVPs"],
         "security": [
           {
@@ -640,7 +677,7 @@
         }
       },
       "delete": {
-        "summary": "Delete an RSVP (requires OAuth authentication)",
+        "summary": "Delete an RSVP (requires GitHub authentication)",
         "tags": ["RSVPs"],
         "security": [
           {
@@ -694,7 +731,7 @@
         }
       },
       "post": {
-        "summary": "Create a new user (requires OAuth authentication)",
+        "summary": "Create a new user (requires GitHub authentication)",
         "tags": ["Users"],
         "security": [
           {
@@ -762,7 +799,7 @@
         }
       },
       "put": {
-        "summary": "Update a user (requires OAuth authentication)",
+        "summary": "Update a user (requires GitHub authentication)",
         "tags": ["Users"],
         "security": [
           {
@@ -805,7 +842,7 @@
         }
       },
       "delete": {
-        "summary": "Delete a user (requires OAuth authentication and admin role)",
+        "summary": "Delete a user (requires GitHub authentication and admin role)",
         "tags": ["Users"],
         "security": [
           {
@@ -838,24 +875,29 @@
         }
       }
     },
-    "/users/auth/google": {
+    "/users/auth/github": {
       "get": {
-        "summary": "Authenticate with Google OAuth",
+        "summary": "Authenticate with GitHub OAuth",
         "tags": ["Authentication"],
+        "description": "Redirects to GitHub login page. After successful authentication, user is redirected to /api-docs",
         "responses": {
           "302": {
-            "description": "Redirects to Google login page"
+            "description": "Redirects to GitHub login page"
           }
         }
       }
     },
-    "/users/auth/google/callback": {
+    "/users/auth/github/callback": {
       "get": {
-        "summary": "Google OAuth callback",
+        "summary": "GitHub OAuth callback",
         "tags": ["Authentication"],
+        "description": "GitHub redirects here after authentication. Do not call this endpoint directly.",
         "responses": {
           "302": {
-            "description": "Redirects to API docs on success"
+            "description": "Redirects to API docs on success or login-failure on error"
+          },
+          "401": {
+            "description": "Authentication failed"
           }
         }
       }
@@ -864,17 +906,35 @@
       "get": {
         "summary": "Logout user",
         "tags": ["Authentication"],
+        "description": "Destroys user session and logs out",
         "responses": {
-          "302": {
-            "description": "Redirects to home page"
+          "200": {
+            "description": "Successfully logged out",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Logged out successfully"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error"
           }
         }
       }
     },
     "/users/me": {
       "get": {
-        "summary": "Get current logged in user (requires OAuth authentication)",
+        "summary": "Get current logged in user",
         "tags": ["Authentication"],
+        "description": "Returns information about the currently authenticated user",
         "security": [
           {
             "sessionAuth": []
@@ -882,7 +942,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Returns current user info",
+            "description": "Current user info",
             "content": {
               "application/json": {
                 "schema": {
@@ -892,7 +952,14 @@
             }
           },
           "401": {
-            "description": "Not logged in"
+            "description": "Not logged in",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           }
         }
       }
