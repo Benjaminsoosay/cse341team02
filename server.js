@@ -7,6 +7,7 @@ const express = require('express');
 const cors = require('cors');
 const session = require('express-session');
 const mongoose = require('mongoose');
+const passport = require('./config/passport');
 const swaggerUi = require('swagger-ui-express');
 const swaggerDocument = require('./swagger.json');
 
@@ -15,6 +16,7 @@ const contactsRoutes = require('./routes/contacts');
 const eventsRoutes = require('./routes/events');
 const rsvpsRoutes = require('./routes/rsvps');
 const usersRoutes = require('./routes/users');
+const authRoutes = require('./routes/auth'); // Add this for OAuth routes
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -29,7 +31,7 @@ app.set('trust proxy', 1);
 
 // Session middleware for OAuth (Week 06 requirement)
 app.use(session({
-  secret: process.env.SESSION_SECRET || 'mysecret',
+  secret: process.env.SESSION_SECRET || 'your-secret-key-change-this',
   resave: false,
   saveUninitialized: false,
   cookie: { 
@@ -38,6 +40,10 @@ app.use(session({
     maxAge: 24 * 60 * 60 * 1000 // 24 hours
   }
 }));
+
+// Initialize Passport
+app.use(passport.initialize());
+app.use(passport.session());
 
 // ============ SWAGGER DOCUMENTATION ============
 // Required at /api-docs for Week 05 & 06
@@ -54,6 +60,7 @@ app.use('/contacts', contactsRoutes);
 app.use('/events', eventsRoutes);
 app.use('/rsvps', rsvpsRoutes);
 app.use('/users', usersRoutes);
+app.use('/auth', authRoutes); // OAuth routes
 
 // ============ HOME ROUTE ============
 app.get('/', (req, res) => {
@@ -61,8 +68,21 @@ app.get('/', (req, res) => {
     message: 'Final Project API is running',
     documentation: '/api-docs',
     collections: ['contacts', 'events', 'rsvps', 'users'],
+    authentication: {
+      login: '/auth/login',
+      github: '/auth/github',
+      google: '/auth/google',
+      profile: '/auth/profile',
+      logout: '/auth/logout'
+    },
     status: '✅ Server is active',
-    environment: process.env.NODE_ENV || 'development'
+    environment: process.env.NODE_ENV || 'development',
+    user: req.user ? {
+      id: req.user._id,
+      name: req.user.name,
+      email: req.user.email,
+      role: req.user.role
+    } : null
   });
 });
 
@@ -72,7 +92,8 @@ app.get('/health', (req, res) => {
     status: 'OK',
     timestamp: new Date().toISOString(),
     server: 'running',
-    mongodb: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected'
+    mongodb: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
+    session: req.session ? 'active' : 'inactive'
   });
 });
 
@@ -137,6 +158,12 @@ const startServer = async () => {
       console.log(`   GET    POST    /events`);
       console.log(`   GET    POST    /rsvps (OAuth protected POST/PUT/DELETE)`);
       console.log(`   GET    POST    /users  (OAuth protected POST/PUT/DELETE)`);
+      console.log(`\n🔐 OAuth Routes:`);
+      console.log(`   GET    /auth/login`);
+      console.log(`   GET    /auth/github`);
+      console.log(`   GET    /auth/google`);
+      console.log(`   GET    /auth/profile`);
+      console.log(`   GET    /auth/logout`);
     });
 
   } catch (error) {
