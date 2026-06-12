@@ -1,8 +1,17 @@
+// tests/contacts.test.js
 const request = require('supertest');
+
+// Mock the Contact model BEFORE importing the app
+jest.mock('../models/Contact', () => ({
+  find: jest.fn(),
+  findById: jest.fn(),
+  create: jest.fn(),
+  findByIdAndUpdate: jest.fn(),
+  findByIdAndDelete: jest.fn()
+}));
+
 const app = require('../server');
 const Contact = require('../models/Contact');
-
-jest.mock('../models/Contact');
 
 describe('Contacts API - GET Tests', () => {
   beforeEach(() => {
@@ -12,8 +21,8 @@ describe('Contacts API - GET Tests', () => {
   describe('GET /contacts', () => {
     it('should return all contacts with status 200', async () => {
       const mockContacts = [
-        { _id: '1', name: 'John Doe', email: 'john@test.com' },
-        { _id: '2', name: 'Jane Doe', email: 'jane@test.com' }
+        { _id: '1', name: 'Contact 1', email: 'contact1@test.com' },
+        { _id: '2', name: 'Contact 2', email: 'contact2@test.com' }
       ];
       
       Contact.find.mockResolvedValue(mockContacts);
@@ -36,7 +45,7 @@ describe('Contacts API - GET Tests', () => {
 
   describe('GET /contacts/:id', () => {
     it('should return a single contact with status 200', async () => {
-      const mockContact = { _id: '123', name: 'John Doe', email: 'john@test.com' };
+      const mockContact = { _id: '123', name: 'Test Contact', email: 'test@test.com' };
       
       Contact.findById.mockResolvedValue(mockContact);
       
